@@ -144,14 +144,14 @@ def init_database():
     
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Product_Item (
-            product_item_id INTEGER PRIMARY KEY,
+            product_id INTEGER PRIMARY KEY,
             description TEXT NOT NULL,
             product_group_id INTEGER,
-            product_option_id INTEGER,
+            product_id INTEGER,
             price INTEGER NOT NULL,
             tax INTEGER NOT NULL,
             FOREIGN KEY (product_group_id) REFERENCES Product_Group(product_group_id),
-            FOREIGN KEY (product_option_id) REFERENCES Product_Option(product_option_id)
+            FOREIGN KEY (product_id) REFERENCES Product_Option(product_id)
         )
     """)
     
@@ -159,11 +159,11 @@ def init_database():
         CREATE TABLE IF NOT EXISTS Order_Product (
             order_id INTEGER,
             product_id INTEGER,
-            product_option TEXT,
+            option TEXT,
             product_quantity INTEGER NOT NULL,
             PRIMARY KEY (order_id, product_id),
             FOREIGN KEY (order_id) REFERENCES Order_Cart(order_id),
-            FOREIGN KEY (product_id) REFERENCES Product_Item(product_item_id)
+            FOREIGN KEY (product_id) REFERENCES Product_Item(product_id)
         )
     """)
     
@@ -201,10 +201,10 @@ def get_order_items(order_id):
             op.order_id,
             op.product_id,
             pi.description as product_name,
-            op.product_option,
+            op.option,
             op.product_quantity
         FROM Order_Product op
-        INNER JOIN Product_Item pi ON op.product_id = pi.product_item_id
+        INNER JOIN Product_Item pi ON op.product_id = pi.product_id
         INNER JOIN Order_Cart oc ON op.order_id = oc.order_id
         WHERE op.order_id = ? AND oc.order_status = 1
         ORDER BY pi.description
@@ -256,7 +256,7 @@ def create_sample_data():
         
         cursor.executemany("""
             INSERT OR IGNORE INTO Product_Item 
-            (product_item_id, description, product_group_id, product_option_id, price, tax)
+            (product_id, description, product_group_id, product_id, price, tax)
             VALUES (?, ?, ?, ?, ?, ?)
         """, sample_items)
         
@@ -273,12 +273,12 @@ def create_sample_data():
         
         # Insert sample order products
         cursor.execute("""
-            INSERT INTO Order_Product (order_id, product_id, product_option, product_quantity)
+            INSERT INTO Order_Product (order_id, product_id, option, product_quantity)
             VALUES (123, 1, NULL, 1)
         """)
         
         cursor.execute("""
-            INSERT INTO Order_Product (order_id, product_id, product_option, product_quantity)
+            INSERT INTO Order_Product (order_id, product_id, option, product_quantity)
             VALUES (456, 2, 'No tomato', 2)
         """)
         
@@ -309,8 +309,8 @@ def display_order_card(order, items):
         # Display each product item
         for item in items:
             product_display = item['product_name']
-            if item['product_option']:
-                product_display += f" ({item['product_option']})"
+            if item['option']:
+                product_display += f" ({item['option']})"
             
             st.markdown(f"""
                     <tr>

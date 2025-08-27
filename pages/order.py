@@ -39,7 +39,7 @@ def initialize_database():
     
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Product_Item (
-            product_item_id INTEGER PRIMARY KEY,
+            product_id INTEGER PRIMARY KEY,
             description TEXT NOT NULL,
             product_group_id INTEGER,
             product_option_id INTEGER,
@@ -68,7 +68,7 @@ def initialize_database():
             product_quantity INTEGER NOT NULL,
             PRIMARY KEY (order_id, product_id, option),
             FOREIGN KEY (order_id) REFERENCES Order_Cart(order_id),
-            FOREIGN KEY (product_id) REFERENCES Product_Item(product_item_id)
+            FOREIGN KEY (product_id) REFERENCES Product_Item(product_id)
         )
     ''')
     
@@ -87,7 +87,7 @@ def initialize_database():
         
         # Insert Product Items
         cursor.executemany('''
-            INSERT INTO Product_Item (product_item_id, description, product_group_id, price, tax) VALUES (?, ?, ?, ?, ?)
+            INSERT INTO Product_Item (product_id, description, product_group_id, price, tax) VALUES (?, ?, ?, ?, ?)
         ''', [
             (1, 'Classic Cheeseburger', 1, 599, 60),
             (2, 'Grilled Chicken Club', 1, 799, 80),
@@ -132,20 +132,23 @@ def get_product_items(group_id):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT product_item_id, description, price 
+        SELECT product_id, description, price 
         FROM Product_Item 
         WHERE product_group_id = ?
-        ORDER BY product_item_id
+        ORDER BY product_id
     ''', (group_id,))
     items = cursor.fetchall()
     conn.close()
     return items
 
-def get_product_options():
-    """Get all product options"""
+def get_product_options(product_id):
+    """Get product options for a specific product item"""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT product_item_id, description FROM Product_Option ORDER BY product_item_id")
+    cursor.execute('''
+        SELECT option FROM Product_Option 
+        WHERE product_id = ?
+    ''', (product_id,))
     options = cursor.fetchall()
     conn.close()
     return options
@@ -302,8 +305,9 @@ with col_menu:
                         
                         with item_col2:
                             # Product options
-                            options = get_product_options()
-                            option_list = ["No option"] + [opt[1] for opt in options]
+                            options = get_product_options(product_id)
+                            option_list = ["No option"] + [opt[0] for opt in options]
+
                             
                             # Create unique key for each product's selectbox
                             selected_option = st.selectbox(

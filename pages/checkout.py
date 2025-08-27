@@ -270,12 +270,12 @@ def get_order_details():
             oc.subtotal,
             op.product_id,
             pi.description,
-            op.product_option,
+            op.option,
             op.product_quantity,
             pi.price
         FROM Order_Cart oc
         LEFT JOIN Order_Product op ON oc.order_id = op.order_id
-        LEFT JOIN Product_Item pi ON op.product_id = pi.product_item_id
+        LEFT JOIN Product_Item pi ON op.product_id = pi.product_id
         WHERE oc.service_area_id = ? AND oc.order_status = 2
         ORDER BY oc.order_id, pi.description
     """, (st.session_state.selected_service_area,))
@@ -369,7 +369,7 @@ def show_checkout_page():
         if row['product_id']:  # Check if product exists
             orders[order_id].append({
                 'description': row['description'],
-                'option': row['product_option'],
+                'op.option': row['option'],
                 'quantity': row['product_quantity'],
                 'price': row['price']
             })
@@ -405,8 +405,8 @@ def show_checkout_page():
         for order_id, items in orders.items():
             for item in items:
                 item_display = item['description']
-                if item['option']:
-                    item_display += f"<br>({item['option']})"
+                if item['op.option']:
+                    item_display += f"<br>({item['op.option']})"
                 
                 st.markdown(f"""
                     <tr>
