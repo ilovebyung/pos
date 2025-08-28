@@ -145,6 +145,8 @@ def show_checkout_page():
     
     # Calculate totals
     total_tips = st.session_state.tips_amount
+    balance_due = subtotal + TAX + total_tips
+    remaining_balance = balance_due - st.session_state.amount_tendered
     
     # Layout
     col1, col2 = st.columns([1, 2])
@@ -203,7 +205,8 @@ def show_checkout_page():
         
         with top_col1:
             st.markdown(f"""
-            
+            <div class="balance-header">Remaining Balance / Change Due</div>
+            <div class="balance-amount">{format_price(remaining_balance)}</div>            
             """, unsafe_allow_html=True)
         
         with top_col2:
