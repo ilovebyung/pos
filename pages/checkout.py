@@ -1,241 +1,9 @@
 import streamlit as st
 import sqlite3
 from datetime import datetime
+from utils.util import load_css, format_price,  calculate_split_amounts
+from utils.database import get_db_connection, initialize_database
 
-# Custom CSS for checkout styling
-def load_css():
-    st.markdown("""
-    <style>
-    .main > div {
-        padding: 1rem;
-    }
-    
-    /* Order Cart Styling */
-    .order-cart {
-        border: 2px solid #bdc3c7;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-        background-color: white;
-    }
-    
-    .order-header {
-        background-color: #2c3e50;
-        color: white;
-        padding: 0.8rem;
-        font-weight: bold;
-        text-align: center;
-        margin: 0;
-    }
-    
-    .cart-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 0;
-    }
-    
-    .cart-header {
-        background-color: #ecf0f1;
-        padding: 0.5rem;
-        font-weight: bold;
-        text-align: center;
-        border-bottom: 1px solid #bdc3c7;
-    }
-    
-    .cart-row {
-        padding: 0.5rem;
-        text-align: center;
-        border-bottom: 1px solid #ecf0f1;
-    }
-    
-    /* Payment Section */
-    .payment-header {
-        background-color: #2c3e50;
-        color: white;
-        padding: 0.8rem;
-        font-weight: bold;
-        text-align: center;
-        border-radius: 8px 8px 0 0;
-        margin: 0;
-    }
-    
-    .payment-table {
-        width: 100%;
-        border-collapse: collapse;
-        border: 2px solid #bdc3c7;
-        border-top: none;
-        border-radius: 0 0 8px 8px;
-    }
-    
-    .payment-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.5rem 1rem;
-        border-bottom: 1px solid #ecf0f1;
-        background-color: #f8f9fa;
-    }
-    
-    .payment-row:last-child {
-        border-bottom: none;
-        font-weight: bold;
-        background-color: #e9ecef;
-    }
-    
-    /* Calculator Buttons */
-    .calc-button {
-        background-color: #3498db !important;
-        color: white !important;
-        border: 2px solid #2980b9 !important;
-        font-size: 1.2rem !important;
-        font-weight: bold !important;
-        width: 100% !important;
-        height: 60px !important;
-        margin: 0.1rem !important;
-        border-radius: 4px !important;
-    }
-    
-    .calc-button:hover {
-        background-color: #2980b9 !important;
-        border-color: #1f4788 !important;
-    }
-    
-    .special-button {
-        background-color: #95a5a6 !important;
-        border-color: #7f8c8d !important;
-    }
-    
-    .special-button:hover {
-        background-color: #7f8c8d !important;
-        border-color: #5d6d7e !important;
-    }
-    
-    .settle-button {
-        background-color: #e74c3c !important;
-        border-color: #c0392b !important;
-        font-size: 1.4rem !important;
-    }
-    
-    .settle-button:hover {
-        background-color: #c0392b !important;
-        border-color: #a93226 !important;
-    }
-    
-    /* Balance Display */
-    .balance-header {
-        background-color: #2c3e50;
-        color: white;
-        padding: 0.5rem;
-        text-align: center;
-        font-weight: bold;
-        margin: 0.5rem 0;
-    }
-    
-    .balance-amount {
-        background-color: #2c3e50;
-        color: white;
-        padding: 0.8rem;
-        text-align: center;
-        font-size: 1.2rem;
-        font-weight: bold;
-    }
-    
-    /* Payment Method Buttons */
-    .payment-method {
-        background-color: #2c3e50 !important;
-        color: white !important;
-        border: 2px solid #34495e !important;
-        font-weight: bold !important;
-        width: 100% !important;
-        margin: 0.1rem 0 !important;
-        padding: 0.8rem !important;
-    }
-    
-    /* Split Section */
-    .split-section {
-        background-color: #f8f9fa;
-        border: 2px solid #bdc3c7;
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-    
-    .split-header {
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-    
-    .split-amounts {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .split-amount {
-        background-color: #e9ecef;
-        padding: 0.5rem;
-        text-align: right;
-        font-weight: bold;
-        border-radius: 4px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Database connection
-def get_db_connection():
-    conn = sqlite3.connect('pos.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-# Format price from integer to dollar format
-def format_price(price_cents):
-    if price_cents is None:
-        return "$ 0.00"
-    return f"$ {abs(price_cents) / 100:.2f}"
-
-# Initialize database and session state
-def init_database():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Create tables if they don't exist
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Order_Cart (
-            order_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_status INTEGER NOT NULL DEFAULT 0,
-            service_area_id INTEGER NOT NULL,
-            customer_id INTEGER,
-            subtotal INTEGER NOT NULL DEFAULT 0,
-            charged INTEGER NOT NULL DEFAULT 0,
-            special_request TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (service_area_id) REFERENCES Service_Area(service_area_id),
-            FOREIGN KEY (customer_id) REFERENCES Customer(customer_id)
-        )
-    """)
-    
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Service_Area (
-            service_area_id INTEGER PRIMARY KEY, 
-            description TEXT,
-            status INTEGER DEFAULT 0,
-            timestamp DATETIME 
-        )
-    """)
-    
-    # Insert sample data for testing if needed
-    cursor.execute("SELECT COUNT(*) FROM Order_Cart WHERE order_status = 2")
-    if cursor.fetchone()[0] == 0:
-        # Create sample confirmed order
-        cursor.execute("""
-            INSERT INTO Order_Cart (order_id, order_status, service_area_id, subtotal)
-            VALUES (123, 2, 7, 2197)
-        """)
-        cursor.execute("""
-            INSERT INTO Order_Cart (order_id, order_status, service_area_id, subtotal)
-            VALUES (456, 2, 7, 799)
-        """)
-    
-    conn.commit()
-    conn.close()
 
 # Initialize session state
 def init_session_state():
@@ -284,22 +52,6 @@ def get_order_details():
     conn.close()
     return results
 
-# Calculate split amounts
-def calculate_split_amounts(total_amount, split_count):
-    if split_count <= 1:
-        return [total_amount]
-    
-    base_amount = total_amount // split_count
-    remainder = total_amount % split_count
-    
-    amounts = [base_amount] * split_count
-    
-    # Distribute remainder starting from the last amounts
-    for i in range(remainder):
-        amounts[-(i+1)] += 1
-    
-    return amounts
-
 # Update order status and service area
 def settle_order(order_ids, total_charged):
     conn = get_db_connection()
@@ -344,10 +96,23 @@ def handle_calculator_input(value):
         amount = value[1:]
         st.session_state.amount_tendered = int(float(amount) * 100)
 
+# Clear service_area 
+def clear_service_area(area_id):
+    """Clear selected service area status to 0 and navigate to service_area page"""
+    st.session_state.service_area_status[area_id] = 0
+    st.switch_page("pages/service_area.py")
+
 # Main checkout page
 def show_checkout_page():
-    load_css()
-    init_database()
+    st.set_page_config(
+        page_title="Checkout",
+        page_icon="💳",
+        layout="wide"
+    )
+
+    st.title("💳 Checkout")
+    st.markdown("---")
+
     init_session_state()
     
     # Get order data
@@ -380,8 +145,6 @@ def show_checkout_page():
     
     # Calculate totals
     total_tips = st.session_state.tips_amount
-    balance_due = subtotal + TAX + total_tips
-    remaining_balance = balance_due - st.session_state.amount_tendered
     
     # Layout
     col1, col2 = st.columns([1, 2])
@@ -424,8 +187,7 @@ def show_checkout_page():
         payment_items = [
             ("Subtotal", subtotal),
             ("Tax", TAX),
-            ("Tips", total_tips),
-            ("Balance due", balance_due)
+            ("Tips", total_tips)
         ]
         
         for label, amount in payment_items:
@@ -437,13 +199,11 @@ def show_checkout_page():
             """, unsafe_allow_html=True)
     
     with col2:
-        # Top row - Balance and Payment Methods
         top_col1, top_col2, top_col3 = st.columns([2, 1, 1])
         
         with top_col1:
             st.markdown(f"""
-            <div class="balance-header">Remaining Balance / Change Due</div>
-            <div class="balance-amount">{format_price(remaining_balance)}</div>
+            
             """, unsafe_allow_html=True)
         
         with top_col2:
@@ -453,14 +213,9 @@ def show_checkout_page():
         with top_col3:
             if st.button("Cash", key="cash", use_container_width=True, type="secondary"):
                 pass
-        
-        # Amount Tendered
-        st.markdown(f"""
-        <div class="balance-header">Amount Tendered {format_price(st.session_state.amount_tendered)}</div>
-        """, unsafe_allow_html=True)
-        
+       
         # Calculator Grid
-        calc_col1, calc_col2, calc_col3, calc_col4 = st.columns(4)
+        calc_col1, calc_col2, calc_col3 = st.columns(3)
         
         # Row 1
         with calc_col1:
@@ -474,10 +229,6 @@ def show_checkout_page():
         with calc_col3:
             if st.button("9", key="calc_9", use_container_width=True):
                 handle_calculator_input("9")
-                st.rerun()
-        with calc_col4:
-            if st.button("$20", key="quick_20", use_container_width=True):
-                handle_calculator_input("$20")
                 st.rerun()
         
         # Row 2
@@ -493,10 +244,6 @@ def show_checkout_page():
             if st.button("6", key="calc_6", use_container_width=True):
                 handle_calculator_input("6")
                 st.rerun()
-        with calc_col4:
-            if st.button("$10", key="quick_10", use_container_width=True):
-                handle_calculator_input("$10")
-                st.rerun()
         
         # Row 3
         with calc_col1:
@@ -510,10 +257,6 @@ def show_checkout_page():
         with calc_col3:
             if st.button("3", key="calc_3", use_container_width=True):
                 handle_calculator_input("3")
-                st.rerun()
-        with calc_col4:
-            if st.button("$5", key="quick_5", use_container_width=True):
-                handle_calculator_input("$5")
                 st.rerun()
         
         # Row 4
@@ -529,10 +272,7 @@ def show_checkout_page():
             if st.button("delete", key="calc_delete", use_container_width=True):
                 handle_calculator_input("delete")
                 st.rerun()
-        with calc_col4:
-            if st.button("enter", key="calc_enter", use_container_width=True):
-                handle_calculator_input("enter")
-                st.rerun()
+
         
         # Tips Section
         st.markdown("### Tips")
@@ -545,7 +285,13 @@ def show_checkout_page():
                     st.session_state.tips_amount = int(float(st.session_state.current_input) * 100)
                     st.session_state.current_input = ""
                     st.rerun()
-        
+
+        with tips_col2:
+            if st.button("No Tips", key="no_tips_button", use_container_width=True, type="secondary"):
+                st.session_state.tips_amount = 0
+                st.rerun()
+
+
         # Split Evenly Section
         st.markdown("### Split evenly")
         split_col1, split_col2, split_col3 = st.columns([1, 2, 1])
@@ -594,6 +340,4 @@ def show_checkout_page():
 
 # Run the page
 if __name__ == "__main__":
-    show_checkout_page()
-else:
     show_checkout_page()

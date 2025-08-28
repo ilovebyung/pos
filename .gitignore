@@ -64,6 +64,7 @@ l10n/
 sandbox.py
 performance.py
 split.py
+pos.db
 *.db 
 *.sqlite
 *.db-shm

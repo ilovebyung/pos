@@ -1,38 +1,8 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
-
-def init_database():
-    """Initialize the database and create tables if they don't exist"""
-    conn = sqlite3.connect('pos.db')
-    conn.execute('PRAGMA journal_mode=WAL;')  # Enable WAL mode
-    cursor = conn.cursor()
-    
-    # Create Service_Area table if it doesn't exist
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Service_Area (
-            service_area_id INTEGER PRIMARY KEY,
-            description TEXT
-        )
-    ''')
-    
-    # Check if table is empty and populate with initial data
-    cursor.execute('SELECT COUNT(*) FROM Service_Area')
-    if cursor.fetchone()[0] == 0:
-        service_areas = [
-            (1, 'buffet tables for eight'),
-            (2, 'square table for two'),
-            (3, 'rectangular table for four'),
-            (4, 'round table for six'),
-            (5, 'VIP booth'),
-            (6, 'outdoor patio table'),
-            (7, 'bar counter seat'),
-            (8, 'window-side table for two')
-        ]
-        cursor.executemany('INSERT INTO Service_Area (service_area_id, description) VALUES (?, ?)', service_areas)
-        conn.commit()
-    
-    conn.close()
+from utils.util import load_css
+from utils.database import  get_db_connection, initialize_database 
 
 def load_service_areas():
     """Load service areas from database with WAL mode enabled"""
@@ -62,7 +32,7 @@ def select_service_area(area_id):
     st.session_state.selected_service_area = area_id
     st.switch_page("pages/order.py")
 
-def main():
+def show_service_area_page():
     st.set_page_config(
         page_title="Service Area Selection",
         page_icon="🍽️",
@@ -71,10 +41,7 @@ def main():
     
     st.title("🍽️ Service Area Selection")
     st.markdown("---")
-    
-    # Initialize database
-    init_database()
-    
+       
     # Load service areas
     service_areas_df = load_service_areas()
     
@@ -139,4 +106,4 @@ def main():
         st.metric("Total Tables", total_count, delta=None)
 
 if __name__ == "__main__":
-    main()
+    show_service_area_page()

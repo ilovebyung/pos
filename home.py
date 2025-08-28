@@ -11,7 +11,7 @@ st.markdown("👉 Use the sidebar to navigate to the service area page.")
 
 # Footer
 st.markdown("---")
-st.caption("Built with ❤️ i4u.dev")
+st.caption("Built with ❤️ \n BADA, i4u.dev")
 
 
 

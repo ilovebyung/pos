@@ -98,3 +98,25 @@ def load_css():
     }
     </style>
     """, unsafe_allow_html=True)
+
+# Format price from integer to dollar format
+def format_price(price_cents):
+    if price_cents is None:
+        return "$ 0.00"
+    return f"$ {abs(price_cents) / 100:.2f}"
+
+# Calculate split amounts
+def calculate_split_amounts(total_amount, split_count):
+    if split_count <= 1:
+        return [total_amount]
+    
+    base_amount = total_amount // split_count
+    remainder = total_amount % split_count
+    
+    amounts = [base_amount] * split_count
+    
+    # Distribute remainder starting from the last amounts
+    for i in range(remainder):
+        amounts[-(i+1)] += 1
+    
+    return amounts
