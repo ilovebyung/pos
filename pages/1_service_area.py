@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from utils.util import load_css
-from utils.database import  get_db_connection, initialize_database 
+from utils.database import  get_db_connection
 
 def load_service_areas():
     """Load service areas from database with WAL mode enabled"""
@@ -30,7 +30,7 @@ def select_service_area(area_id):
     """Set selected service area status to 1 and navigate to order page"""
     st.session_state.service_area_status[area_id] = 1
     st.session_state.selected_service_area = area_id
-    st.switch_page("pages/order.py")
+    st.switch_page("pages/2_order.py")
 
 def show_service_area_page():
     st.set_page_config(

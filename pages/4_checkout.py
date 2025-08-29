@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 from utils.util import load_css, format_price,  calculate_split_amounts
-from utils.database import get_db_connection, initialize_database
+from utils.database import get_db_connection
 
 
 # Initialize session state
@@ -100,7 +100,7 @@ def handle_calculator_input(value):
 def clear_service_area(area_id):
     """Clear selected service area status to 0 and navigate to service_area page"""
     st.session_state.service_area_status[area_id] = 0
-    st.switch_page("pages/service_area.py")
+    st.switch_page("pages/1_service_area.py")
 
 # Main checkout page
 def show_checkout_page():
@@ -290,7 +290,7 @@ def show_checkout_page():
                     st.rerun()
 
         with tips_col2:
-            if st.button("No Tips", key="no_tips_button", use_container_width=True, type="secondary"):
+            if st.button("Clear Tips", key="clear_tips_button", use_container_width=True, type="secondary"):
                 st.session_state.tips_amount = 0
                 st.rerun()
 

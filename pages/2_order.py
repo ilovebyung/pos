@@ -1,8 +1,8 @@
 import streamlit as st
 import sqlite3
 from datetime import datetime
-from utils.util import load_css
-from utils.database import  get_db_connection, initialize_database 
+from utils.util import load_css, format_price
+from utils.database import  get_db_connection
 
 # Set selected_service_area 7
 if 'selected_service_area' not in st.session_state:
@@ -14,10 +14,6 @@ if 'cart' not in st.session_state:
 
 if 'order_id' not in st.session_state:
     st.session_state.order_id = None
-
-def format_price(price):
-    """Format price from integer cents to dollar string"""
-    return f"$ {price/100:.2f}"
 
 def get_product_groups():
     """Get all product groups"""
@@ -179,7 +175,7 @@ def show_order_page():
                 # Clear cart after successful order
                 st.session_state.cart = []
                 # Navigate to checkout
-                st.switch_page("pages/checkout.py")
+                st.switch_page("pages/4_checkout.py")
 
     # Right column - Menu
     with col_menu:

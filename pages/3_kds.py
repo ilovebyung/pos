@@ -1,8 +1,8 @@
 import streamlit as st
 import sqlite3
 from datetime import datetime
-from utils.util import load_css
-from utils.database import  get_db_connection, initialize_database 
+from utils.util import load_css, format_price
+from utils.database import  get_db_connection 
 
 
 # Get all open orders (order_status = 1)

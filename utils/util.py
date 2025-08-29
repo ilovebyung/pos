@@ -1,5 +1,6 @@
 # Custom CSS for styling
 import streamlit as st
+import datetime
 
 def load_css():
     st.markdown("""
@@ -105,6 +106,14 @@ def format_price(price_cents):
         return "$ 0.00"
     return f"$ {abs(price_cents) / 100:.2f}"
 
+def format_timestamp(timestamp_str):
+    """Format timestamp for better display"""
+    try:
+        dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    except:
+        return timestamp_str
+    
 # Calculate split amounts
 def calculate_split_amounts(total_amount, split_count):
     if split_count <= 1:
