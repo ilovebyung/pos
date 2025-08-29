@@ -28,13 +28,13 @@ def get_transaction_data(start_date, end_date):
                 ELSE 'unknown'
             END AS order_status,
             oh.timestamp,
-            pi.product_id,
+            -- pi.product_id,
             pi.description as product_description,
             pi.price,
             pi.tax,
             op.product_quantity,
-            op.service_area_id,
-            op.option,
+            -- op.service_area_id,
+            -- op.option,
             (pi.price * op.product_quantity) as subtotal,
             (pi.tax * op.product_quantity) as total_tax,
             ((pi.price + pi.tax) * op.product_quantity) as total_amount
@@ -194,8 +194,8 @@ else:
         'price': 'Unit Price',
         'tax': 'Unit Tax',
         'product_quantity': 'Quantity',
-        'service_area_id': 'Service Area',
-        'option': 'Option',
+        # 'service_area_id': 'Service Area',
+        # 'option': 'Option',
         'subtotal': 'Subtotal',
         'total_tax': 'Total Tax',
         'total_amount': 'Total Amount'

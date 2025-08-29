@@ -100,7 +100,7 @@ def handle_calculator_input(value):
 def clear_service_area(area_id):
     """Clear selected service area status to 0 and navigate to service_area page"""
     st.session_state.service_area_status[area_id] = 0
-    st.switch_page("pages/1_service_area.py")
+    st.switch_page("pages/1_Service_Area.py")
 
 # Main checkout page
 def show_checkout_page():
@@ -339,7 +339,7 @@ def show_checkout_page():
                 st.session_state.split_count = 1
                 
                 st.success("Order settled successfully!")
-                st.switch_page("pages/service_area.py")
+                st.switch_page("pages/1_Service_Area.py")
 
 # Run the page
 if __name__ == "__main__":

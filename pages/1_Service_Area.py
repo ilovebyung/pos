@@ -30,7 +30,7 @@ def select_service_area(area_id):
     """Set selected service area status to 1 and navigate to order page"""
     st.session_state.service_area_status[area_id] = 1
     st.session_state.selected_service_area = area_id
-    st.switch_page("pages/2_order.py")
+    st.switch_page("pages/2_Order.py")
 
 def show_service_area_page():
     st.set_page_config(

@@ -175,7 +175,7 @@ def show_order_page():
                 # Clear cart after successful order
                 st.session_state.cart = []
                 # Navigate to checkout
-                st.switch_page("pages/4_checkout.py")
+                st.switch_page("pages/4_Checkout.py")
 
     # Right column - Menu
     with col_menu:
