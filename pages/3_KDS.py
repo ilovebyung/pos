@@ -1,8 +1,10 @@
 import streamlit as st
 import sqlite3
 from datetime import datetime
-from utils.util import load_css, format_price
+from utils.util import format_price
 from utils.database import  get_db_connection 
+from utils.style import load_css 
+
 
 
 # Get all open orders (order_status = 1)
@@ -69,26 +71,24 @@ def confirm_order(order_id):
     finally:
         conn.close()
 
-
 # Display individual order card
+
+
 def display_order_card(order, items):
     with st.container():
-        # Order header
+        # Single card with header and content together
         st.markdown(f"""
         <div class="order-card">
             <div class="order-header">
-                <span>service_area:{order['service_area_id']}</span>
+                <span>Service Area: {order['service_area_id']}</span>
                 <span>Order: {order['order_id']}</span>
             </div>
             <div class="order-content">
                 <table class="product-table">
-                    <tr>
-                        <th class="table-header">product_Item</th>
-                        <th class="table-header" style="width: 100px; text-align: center;">quantity</th>
-                    </tr>
+
         """, unsafe_allow_html=True)
         
-        # Display each product item
+        # Display each product item within the same HTML block
         for item in items:
             product_display = item['product_name']
             if item['option']:
@@ -101,13 +101,14 @@ def display_order_card(order, items):
                     </tr>
             """, unsafe_allow_html=True)
         
+        # Close the table and card in one block
         st.markdown("""
                 </table>
             </div>
         </div>
         """, unsafe_allow_html=True)
         
-        # Confirm button
+        # Confirm button outside the card
         if st.button("Confirm", key=f"confirm_{order['order_id']}", use_container_width=True):
             if confirm_order(order['order_id']):
                 st.success(f"Order {order['order_id']} confirmed!")
@@ -120,6 +121,8 @@ def show_kds_page():
         page_icon="🍳",
         layout="wide"
     )
+    
+    load_css()
     
     st.title("🍳 Kitchen Display System")
     st.markdown("---")
@@ -136,18 +139,11 @@ def show_kds_page():
         """, unsafe_allow_html=True)
         return
     
-    # Display orders in columns
-    # Calculate number of columns based on number of orders
-    num_orders = len(orders)
-    if num_orders == 1:
-        cols = [st.columns(1)[0]]
-    elif num_orders == 2:
-        cols = st.columns(2)
-    else:
-        cols = st.columns(min(3, num_orders))  # Maximum 3 columns
+    # Display orders in three fixed columns
+    cols = st.columns(3)
     
     for i, order in enumerate(orders):
-        col_index = i % len(cols)
+        col_index = i % 3
         
         with cols[col_index]:
             # Get items for this order
@@ -163,11 +159,7 @@ def show_kds_page():
         if st.button("🔄 Refresh", use_container_width=False):
             st.rerun()
     
-    # Auto-refresh (uncomment for production)
-    # import time
-    # time.sleep(30)
-    # st.rerun()
 
 # Run the page
 if __name__ == "__main__":
-    show_kds_page() 
+    show_kds_page()
