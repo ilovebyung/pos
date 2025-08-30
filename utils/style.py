@@ -1,62 +1,49 @@
 import streamlit as st
 
 def load_css():
+    """
+    Merges and loads all custom CSS styles for the Streamlit application.
+    This function combines styles for global elements, buttons, cards,
+    tables, and responsive design to ensure a consistent look and feel.
+    """
     st.markdown("""
     <style>
-    /* Global styling */
-    .main > div {
-        padding: 2rem 1rem;
+    /* Global and Core Styling */
+    :root {
+        --primary-color: #3498db;
+        --secondary-color: #28a745;
+        --background-color: #f0f2f6;
+        --card-background: #ffffff;
+        --text-color: #2c3e50;
+        --subtext-color: #6c757d;
+        --accent-color: #e74c3c;
     }
     
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--text-color);
+        background-color: var(--background-color);
     }
     
-    /* Service Area Button Styling */
-    .service-area-button {
-        width: 100%;
-        padding: 2rem;
-        margin: 0.5rem 0;
-        border-radius: 12px;
-        text-align: center;
+    /* Main container padding */
+    .main > div {
+        padding: 2rem 1rem;
+    }
+
+    /* Page title and header styling */
+    .main h1 {
+        color: var(--text-color);
+        border-bottom: 3px solid var(--primary-color);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
         font-weight: bold;
-        font-size: 1.2rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 3px solid;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    
-    .service-area-active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-color: #667eea;
-    }
-    
-    .service-area-available {
-        background: white;
-        color: #333;
-        border-color: #28a745;
-    }
-    
-    .service-area-button:hover {
-        opacity: 0.9;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    }
-    
-    .running-time {
-        font-size: 1rem;
-        font-weight: normal;
-        margin-top: 0.5rem;
-        opacity: 0.9;
-    }
-    
-    /* Streamlit Button Override for Service Areas */
-    div.stButton > button:first-child {
+
+    /* Streamlit Button Styling Overrides */
+    div.stButton > button {
         width: 100%;
         height: auto;
-        min-height: 120px;
+        min-height: 50px;
         white-space: pre-line;
         font-size: 1.1rem;
         font-weight: bold;
@@ -65,12 +52,23 @@ def load_css():
         transition: all 0.3s ease;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    
-    div.stButton > button:first-child:hover {
+
+    div.stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
     }
-    
+
+    /* Service Area Button Specific Styling */
+    div.stButton > button[data-testid="baseButton-secondary"] {
+        background-color: var(--card-background);
+        color: var(--text-color);
+        border-color: var(--secondary-color);
+        min-height: 120px;
+        padding: 2rem;
+    }
+
+    /* Specific Streamlit Button States */
     .active-button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
@@ -78,20 +76,68 @@ def load_css():
     }
     
     .available-button {
-        background: white !important;
-        color: #333 !important;
-        border-color: #28a745 !important;
+        background: var(--card-background) !important;
+        color: var(--text-color) !important;
+        border-color: var(--secondary-color) !important;
     }
     
-    /* Order Card Styling */
+    .stButton > button:has-text("Confirm Order") {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 16px;
+        font-weight: 500;
+        font-size: 12px;
+        min-height: 28px;
+        margin-top: 8px;
+    }
+
+    .stButton > button:has-text("Confirm Order"):hover {
+        background: #e04146;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(255, 90, 95, 0.3);
+    }
+
+    .stButton > button[kind="secondary"] {
+        height: 80px;
+        background-color: #1f77b4;
+        color: white;
+        border: 2px solid #1f77b4;
+    }
+
+    .stButton > button[kind="secondary"]:hover {
+        background-color: #0d5aa7;
+        border-color: #0d5aa7;
+    }
+
+    .stButton > button:disabled {
+        background-color: #ff4444;
+        color: white;
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+    
+    /* Cart section styling */
+    .cart-container {
+        background-color: var(--card-background);
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Card Styling (General) */
     .order-card {
-        background: white;
+        background: var(--card-background);
         border: 2px solid #e1e5e9;
         border-radius: 12px;
         margin-bottom: 20px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
         overflow: hidden;
+        animation: slideIn 0.5s ease-out;
     }
     
     .order-card:hover {
@@ -118,12 +164,6 @@ def load_css():
         font-size: 12px;
     }
     
-    /* Order content area */
-    .order-content {
-        padding: 16px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    
     /* Product table styling */
     .product-table {
         width: 100%;
@@ -133,7 +173,7 @@ def load_css():
         border-radius: 6px;
         overflow: hidden;
     }
-    
+
     .table-header {
         background-color: #f8f9fa;
         color: #495057;
@@ -145,7 +185,7 @@ def load_css():
         border-bottom: 2px solid #dee2e6;
         text-align: left;
     }
-    
+
     .product-name {
         padding: 12px;
         border-bottom: 1px solid #f1f3f4;
@@ -153,92 +193,58 @@ def load_css():
         color: #2c3e50;
         line-height: 1.4;
     }
-    
+
     .quantity-cell {
         padding: 12px;
         border-bottom: 1px solid #f1f3f4;
         text-align: center;
         font-weight: 600;
         font-size: 16px;
-        color: #e74c3c;
+        color: var(--accent-color);
         background-color: #fef9f9;
         width: 100px;
     }
-    
-    /* Table row hover effects */
-    .product-table tr:hover .product-name,
-    .product-table tr:hover .quantity-cell {
-        background-color: #f8f9fa;
+
+    /* Message and Alert Styling */
+    .stSuccess {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+        border-radius: 8px;
     }
     
-    /* No orders message */
-    .no-orders {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6c757d;
-        font-size: 18px;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        border-radius: 12px;
-        margin: 20px 0;
-    }
-    
-    .no-orders small {
-        display: block;
-        margin-top: 10px;
-        font-size: 14px;
-        color: #adb5bd;
-    }
-    
-    /* Confirm Button Styling */
-    .stButton > button {
-        background: #ff5a5f;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 6px 16px;
+    .stAlert > div {
+        border-radius: 10px;
+        padding: 15px;
         font-weight: 500;
-        font-size: 12px;
-        min-height: 28px;
-        transition: all 0.3s ease;
-        margin-top: 8px;
     }
     
-    .stButton > button:hover {
-        background: #e04146;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(255, 90, 95, 0.3);
+    .stInfo > div {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 8px;
+        padding: 15px;
+        color: #0c5460;
+        font-weight: 500;
     }
-    
-    /* Refresh Button Styling */
-    .refresh-btn, .refresh-button {
-        background: linear-gradient(135deg, #333 0%, #555 100%) !important;
-        color: white !important;
-        border: none !important;
-        padding: 1rem 2rem !important;
-        font-size: 1.1rem !important;
-        font-weight: bold !important;
-        border-radius: 12px !important;
-        width: 200px !important;
-        margin: 2rem auto !important;
-        display: block !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+
+    /* Responsive design for smaller screens */
+    @media (max-width: 768px) {
+        .main > div {
+            padding: 1rem 0.5rem;
+        }
+        
+        div.stButton > button {
+            min-height: 100px;
+            font-size: 1rem;
+        }
+        
+        .order-card {
+            margin-bottom: 15px;
+        }
     }
-    
-    .refresh-btn:hover, .refresh-button:hover {
-        background: linear-gradient(135deg, #222 0%, #444 100%) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
-    }
-    
-    /* Status indicators */
-    .order-header::before {
-        content: "🔥";
-        margin-right: 8px;
-        font-size: 16px;
-    }
-    
-    /* Animation for new orders */
+
+    /* Animation */
     @keyframes slideIn {
         from {
             opacity: 0;
@@ -247,81 +253,6 @@ def load_css():
         to {
             opacity: 1;
             transform: translateY(0);
-        }
-    }
-    
-    .order-card {
-        animation: slideIn 0.5s ease-out;
-    }
-    
-    /* Success message styling */
-    .stSuccess {
-        background-color: #d4edda;
-        border-color: #c3e6cb;
-        color: #155724;
-        border-radius: 8px;
-    }
-    
-    /* Responsive design for smaller screens */
-    @media (max-width: 768px) {
-        .main > div {
-            padding: 1rem 0.5rem;
-        }
-        
-        .service-area-button {
-            padding: 1.5rem;
-            font-size: 1rem;
-        }
-        
-        div.stButton > button:first-child {
-            min-height: 100px;
-            font-size: 1rem;
-        }
-        
-        .order-card {
-            margin-bottom: 15px;
-        }
-        
-        .order-header {
-            padding: 10px 12px;
-            font-size: 12px;
-        }
-        
-        .order-header span {
-            font-size: 10px;
-            padding: 3px 6px;
-        }
-        
-        .product-name {
-            font-size: 13px;
-            padding: 10px;
-        }
-        
-        .quantity-cell {
-            font-size: 14px;
-            padding: 10px;
-            width: 80px;
-        }
-        
-        .table-header {
-            font-size: 11px;
-            padding: 8px 10px;
-        }
-        
-        .running-time {
-            font-size: 0.9rem;
-        }
-    }
-    
-    /* Medium screen adjustments */
-    @media (max-width: 1024px) and (min-width: 769px) {
-        .service-area-button {
-            padding: 1.8rem;
-            font-size: 1.1rem;
-        }
-        
-        .order-header {
-            font-size: 13px;
         }
     }
     </style>

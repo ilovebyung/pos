@@ -1,109 +1,118 @@
 import streamlit as st
 import sqlite3
-import pandas as pd
-from utils.util import load_css
-from utils.database import  get_db_connection
+import os
+from datetime import datetime
+from utils.database import get_db_connection
+from utils.style import load_css 
 
-def load_service_areas():
-    """Load service areas from database with WAL mode enabled"""
-    conn = sqlite3.connect('pos.db')
-    conn.execute('PRAGMA journal_mode=WAL;')  # Enable WAL mode
-    df = pd.read_sql_query('SELECT * FROM Service_Area ORDER BY service_area_id', conn)
+
+# Page configuration
+st.set_page_config(
+    page_title="Service Area - POS System",
+    page_icon="🍽️",
+    layout="wide"
+)
+
+# Function to get all service areas
+def get_service_areas():
+    """Fetch all service areas from database"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT service_area_id, description, status FROM Service_Area ORDER BY service_area_id')
+    areas = cursor.fetchall()
     conn.close()
-    return df
+    return areas
 
-def initialize_session_state(service_areas_df):
-    """Initialize session state for service areas if empty"""
-    if 'service_area_status' not in st.session_state:
-        st.session_state.service_area_status = {}
-        for _, row in service_areas_df.iterrows():
-            st.session_state.service_area_status[row['service_area_id']] = 0
-
-def reset_all_tables():
-    """Reset all service area statuses to 0"""
-    if 'service_area_status' in st.session_state:
-        for area_id in st.session_state.service_area_status.keys():
-            st.session_state.service_area_status[area_id] = 0
-    st.rerun()
-
-def select_service_area(area_id):
-    """Set selected service area status to 1 and navigate to order page"""
-    st.session_state.service_area_status[area_id] = 1
-    st.session_state.selected_service_area = area_id
-    st.switch_page("pages/2_Order.py")
-
-def show_service_area_page():
-    st.set_page_config(
-        page_title="Service Area Selection",
-        page_icon="🍽️",
-        layout="wide"
+# Function to update service area status
+def update_service_area_status(service_area_id):
+    """Update service area status to occupied (1)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        'UPDATE Service_Area SET status = 1, timestamp = ? WHERE service_area_id = ?',
+        (datetime.now(), service_area_id)
     )
-    
-    st.title("🍽️ Service Area Selection")
-    st.markdown("---")
-       
-    # Load service areas
-    service_areas_df = load_service_areas()
-    
-    # Initialize session state
-    initialize_session_state(service_areas_df)
-    
-    # Create grid layout for service areas
-    cols = st.columns(3)
-    
-    for idx, (_, row) in enumerate(service_areas_df.iterrows()):
-        area_id = row['service_area_id']
-        description = row['description']
-        status = st.session_state.service_area_status[area_id]
-        
-        col_idx = idx % 3
-        
-        with cols[col_idx]:
-            # Determine button style based on status
-            if status == 0:  # Available
-                button_type = "primary"
-                button_text = f"**{area_id}**\n\n{description}"
-                disabled = False
-            else:  # Occupied
-                button_type = "secondary"
-                button_text = f"**{area_id}** 🔴\n\n{description}\n\n*OCCUPIED*"
-                disabled = True
-            
-            # Create button for each service area
-            if st.button(
-                button_text,
-                key=f"area_{area_id}",
-                disabled=disabled,
-                use_container_width=True,
-                type=button_type
-            ):
-                select_service_area(area_id)
-    
-    st.markdown("---")
-    
-    # Reset and status section
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        if st.button("🔄 Reset Table", use_container_width=True, type="secondary"):
-            reset_all_tables()
-    
-    # Display current status
-    st.markdown("### Current Status")
-    status_cols = st.columns(3)
-    
-    available_count = sum(1 for status in st.session_state.service_area_status.values() if status == 0)
-    occupied_count = sum(1 for status in st.session_state.service_area_status.values() if status == 1)
-    total_count = len(st.session_state.service_area_status)
-    
-    with status_cols[0]:
-        st.metric("Available", available_count, delta=None)
-    
-    with status_cols[1]:
-        st.metric("Occupied", occupied_count, delta=None)
-    
-    with status_cols[2]:
-        st.metric("Total Tables", total_count, delta=None)
+    conn.commit()
+    conn.close()
 
-if __name__ == "__main__":
-    show_service_area_page()
+# Function to reset all statuses (for the refresh button)
+def reset_all_statuses():
+    """Reset all service area statuses to available (0)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE Service_Area SET status = 0, timestamp = NULL')
+    conn.commit()
+    conn.close()
+
+
+# Main page content
+load_css()
+st.title("🍽️ Service Area Selection")
+st.markdown("### Please select a table or seating area")
+
+# Get service areas
+service_areas = get_service_areas()
+
+# Create a grid layout for buttons
+col1, col2, col3 = st.columns(3)
+
+# Display service area buttons in a grid
+for i, area in enumerate(service_areas):
+    service_area_id = area['service_area_id']
+    description = area['description']
+    status = area['status']
+    
+    # Determine button color based on status
+    button_type = "secondary" if status == 0 else "primary"
+    button_label = f"{service_area_id} - {description}"
+    
+    # Distribute buttons across columns
+    with [col1, col2, col3][i % 3]:
+        # Create button with conditional styling
+        if status == 0:  # Available - Blue
+            if st.button(
+                button_label,
+                key=f"area_{service_area_id}",
+                type="secondary",
+                use_container_width=True
+            ):
+                # Update status to occupied
+                update_service_area_status(service_area_id)
+                
+                # Store selected service area in session state
+                st.session_state.selected_service_area = service_area_id
+                
+                # Navigate to Order page
+                st.switch_page("pages/2_Order.py")
+        else:  # Occupied - Different styling
+            st.button(
+                f"🔴 {service_area_id} - {description} (Occupied)",
+                key=f"occupied_area_{service_area_id}",
+                disabled=True,
+                use_container_width=True
+            )
+
+# Add some spacing
+st.markdown("---")
+
+# Refresh button to reset all statuses
+col_refresh1, col_refresh2, col_refresh3 = st.columns([1, 1, 1])
+with col_refresh2:
+    if st.button("🔄 Refresh", type="primary", use_container_width=True):
+        reset_all_statuses()
+        st.rerun()
+
+# Display status information
+st.markdown("### Status Legend")
+col_legend1, col_legend2 = st.columns(2)
+with col_legend1:
+    st.markdown("🟦 **Available** - Ready for seating")
+with col_legend2:
+    st.markdown("🔴 **Occupied** - Currently in use")
+
+# Optional: Display current status summary
+available_count = sum(1 for area in service_areas if area['status'] == 0)
+occupied_count = len(service_areas) - available_count
+
+st.markdown(f"**Summary:** {available_count} available, {occupied_count} occupied")
+

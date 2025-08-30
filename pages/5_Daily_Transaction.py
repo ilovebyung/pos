@@ -2,8 +2,9 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from datetime import datetime, date, timedelta
-from utils.util import load_css, format_price, format_timestamp
+from utils.util import format_price, format_timestamp
 from utils.database import  get_db_connection
+from utils.style import load_css 
 
 # Page configuration
 st.set_page_config(page_title="Daily Transactions", page_icon="📊", layout="wide")

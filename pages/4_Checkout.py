@@ -1,9 +1,30 @@
 import streamlit as st
 import sqlite3
 from datetime import datetime
-from utils.util import load_css, format_price,  calculate_split_amounts
+from utils.util import format_price,  calculate_split_amounts
 from utils.database import get_db_connection
+from utils.style import load_css 
+import streamlit as st
+import sqlite3
 
+import streamlit as st
+import sqlite3
+from datetime import datetime
+
+# Format price helper
+def format_price(cents):
+    return f"${cents / 100:.2f}"
+
+# Calculate split amounts
+def calculate_split_amounts(total, split_count):
+    base_amount = total // split_count
+    remainder = total % split_count
+    
+    amounts = [base_amount] * split_count
+    for i in range(remainder):
+        amounts[i] += 1
+    
+    return amounts
 
 # Initialize session state
 def init_session_state():
@@ -89,18 +110,13 @@ def handle_calculator_input(value):
         if st.session_state.current_input:
             st.session_state.amount_tendered = int(float(st.session_state.current_input) * 100)
             st.session_state.current_input = ""
-    elif value in ["00", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+    elif value in [".", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
         st.session_state.current_input += value
     elif value.startswith("$"):
         # Quick amount buttons
         amount = value[1:]
         st.session_state.amount_tendered = int(float(amount) * 100)
 
-# Clear service_area 
-def clear_service_area(area_id):
-    """Clear selected service area status to 0 and navigate to service_area page"""
-    st.session_state.service_area_status[area_id] = 0
-    st.switch_page("pages/1_Service_Area.py")
 
 # Main checkout page
 def show_checkout_page():
@@ -109,6 +125,7 @@ def show_checkout_page():
         page_icon="💳",
         layout="wide"
     )
+    load_css()
 
     st.title("💳 Checkout")
     st.markdown("---")
@@ -134,7 +151,7 @@ def show_checkout_page():
         if row['product_id']:  # Check if product exists
             orders[order_id].append({
                 'description': row['description'],
-                'op.option': row['option'],
+                'option': row['option'],
                 'quantity': row['product_quantity'],
                 'price': row['price']
             })
@@ -148,11 +165,11 @@ def show_checkout_page():
     balance_due = subtotal + TAX + total_tips
     remaining_balance = balance_due - st.session_state.amount_tendered
     
-    # Layout
-    col1, col2 = st.columns([1, 2])
+    # THREE COLUMN LAYOUT
+    col1, col2, col3 = st.columns([2, 1.5, 1.5])
     
+    # COLUMN 1: ORDER CART
     with col1:
-        # Order Cart
         st.markdown(f"""
         <div class="order-cart">
             <div class="order-header">
@@ -161,17 +178,17 @@ def show_checkout_page():
             </div>
             <table class="cart-table">
                 <tr>
-                    <th class="cart-header">product_Item</th>
-                    <th class="cart-header">quantity</th>
-                    <th class="cart-header">price</th>
+                    <th class="cart-header">Product Item</th>
+                    <th class="cart-header">Quantity</th>
+                    <th class="cart-header">Price</th>
                 </tr>
         """, unsafe_allow_html=True)
         
         for order_id, items in orders.items():
             for item in items:
                 item_display = item['description']
-                if item['op.option']:
-                    item_display += f"<br>({item['op.option']})"
+                if item['option']:
+                    item_display += f"<br>({item['option']})"
                 
                 st.markdown(f"""
                     <tr>
@@ -199,28 +216,28 @@ def show_checkout_page():
                 <span>{format_price(amount)}</span>
             </div>
             """, unsafe_allow_html=True)
+        
+
     
+    # COLUMN 2: NUMBER PAD
     with col2:
-        top_col1, top_col2, top_col3 = st.columns([2, 1, 1])
+        # Balance Display - moved from column 1
+        st.markdown(f"""
+        <div class="balance-header">Remaining Balance / Change Due</div>
+        <div class="balance-amount">{format_price(remaining_balance)}</div>            
+        """, unsafe_allow_html=True)
         
-        with top_col1:
-            st.markdown(f"""
-            <div class="balance-header">Remaining Balance / Change Due</div>
-            <div class="balance-amount">{format_price(remaining_balance)}</div>            
-            """, unsafe_allow_html=True)
+        # Display current input - moved from column 1
+        if st.session_state.current_input:
+            st.markdown(f"**Current input:** ${st.session_state.current_input}")
+        else:
+            st.markdown(f"**Current input:** ${0}")
+
+        st.markdown("### Number Pad")
         
-        with top_col2:
-            if st.button("Credit", key="credit", use_container_width=True, type="secondary"):
-                pass
-        
-        with top_col3:
-            if st.button("Cash", key="cash", use_container_width=True, type="secondary"):
-                pass
-       
-        # Calculator Grid
-        calc_col1, calc_col2, calc_col3 = st.columns(3)
-        
+        # Calculator Grid - 4x3 layout
         # Row 1
+        calc_col1, calc_col2, calc_col3 = st.columns(3)
         with calc_col1:
             if st.button("7", key="calc_7", use_container_width=True):
                 handle_calculator_input("7")
@@ -235,6 +252,7 @@ def show_checkout_page():
                 st.rerun()
         
         # Row 2
+        calc_col1, calc_col2, calc_col3 = st.columns(3)
         with calc_col1:
             if st.button("4", key="calc_4", use_container_width=True):
                 handle_calculator_input("4")
@@ -249,6 +267,7 @@ def show_checkout_page():
                 st.rerun()
         
         # Row 3
+        calc_col1, calc_col2, calc_col3 = st.columns(3)
         with calc_col1:
             if st.button("1", key="calc_1", use_container_width=True):
                 handle_calculator_input("1")
@@ -263,53 +282,70 @@ def show_checkout_page():
                 st.rerun()
         
         # Row 4
+        calc_col1, calc_col2, calc_col3 = st.columns(3)
         with calc_col1:
             if st.button("0", key="calc_0", use_container_width=True):
                 handle_calculator_input("0")
                 st.rerun()
         with calc_col2:
-            if st.button("00", key="calc_00", use_container_width=True):
-                handle_calculator_input("00")
+            if st.button(".", key="calc_.", use_container_width=True):
+                handle_calculator_input(".")
                 st.rerun()
         with calc_col3:
-            if st.button("delete", key="calc_delete", use_container_width=True):
+            if st.button("Delete", key="calc_delete", use_container_width=True):
                 handle_calculator_input("delete")
                 st.rerun()
-
         
-        # Tips Section
-        st.markdown("### Tips")
-        tips_col1, tips_col2 = st.columns([3, 1])
+        # Enter button
+        if st.button("Enter", key="calc_enter", use_container_width=True, type="primary"):
+            handle_calculator_input("enter")
+            st.rerun()
+    
+    # COLUMN 3: ACTION BUTTONS
+    with col3:
+        st.markdown("### Payment & Actions")
         
-        with tips_col1:
-            if st.button("Tips", key="tips_button", use_container_width=True, type="secondary"):
-                # Use current input as tips if available
-                if st.session_state.current_input:
-                    st.session_state.tips_amount = int(float(st.session_state.current_input) * 100)
-                    st.session_state.current_input = ""
-                    st.rerun()
-
-        with tips_col2:
-            if st.button("Clear Tips", key="clear_tips_button", use_container_width=True, type="secondary"):
-                st.session_state.tips_amount = 0
+        # Payment type buttons
+        if st.button("Credit", key="credit", use_container_width=True, type="secondary"):
+            pass
+        
+        if st.button("Cash", key="cash", use_container_width=True, type="secondary"):
+            pass
+        
+        st.markdown("---")
+        
+        # Tips buttons
+        st.markdown("**Tips**")
+        if st.button("Tips", key="tips_button", use_container_width=True, type="secondary"):
+            # Use current input as tips if available
+            if st.session_state.current_input:
+                st.session_state.tips_amount = int(float(st.session_state.current_input) * 100)
+                st.session_state.current_input = ""
                 st.rerun()
 
-
-        # Split Evenly Section
-        st.markdown("### Split evenly")
+        if st.button("No Tips", key="no_tips_button", use_container_width=True, type="secondary"):
+            st.session_state.tips_amount = 0
+            st.rerun()
+        
+        st.markdown("---")
+        
+        # Split evenly section
+        st.markdown("**Split Evenly**")
+        
+        # Split counter controls
         split_col1, split_col2, split_col3 = st.columns([1, 2, 1])
         
         with split_col1:
-            if st.button("➖", key="split_minus"):
+            if st.button("➖", key="split_minus", use_container_width=True):
                 if st.session_state.split_count > 1:
                     st.session_state.split_count -= 1
                     st.rerun()
         
         with split_col2:
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: #f0f0f0; border-radius: 4px;'>{st.session_state.split_count}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: #f0f0f0; border-radius: 4px; font-weight: bold; font-size: 18px;'>{st.session_state.split_count}</div>", unsafe_allow_html=True)
         
         with split_col3:
-            if st.button("➕", key="split_plus"):
+            if st.button("➕", key="split_plus", use_container_width=True):
                 st.session_state.split_count += 1
                 st.rerun()
         
@@ -318,15 +354,12 @@ def show_checkout_page():
             split_amounts = calculate_split_amounts(balance_due, st.session_state.split_count)
             st.markdown("**Split amounts:**")
             for i, amount in enumerate(split_amounts):
-                st.markdown(f"<div class='split-amount'>{format_price(amount)}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='split-amount'>Person {i+1}: {format_price(amount)}</div>", unsafe_allow_html=True)
         
-        # Display current input
-        if st.session_state.current_input:
-            st.markdown(f"**Current input:** ${st.session_state.current_input}")
+        st.markdown("---")
         
         # Settle Button
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("settle", key="settle", use_container_width=True, type="primary"):
+        if st.button("Settle", key="settle", use_container_width=True, type="primary"):
             # Calculate total charged (subtotal + tax + tips)
             total_charged = subtotal + TAX + total_tips
             

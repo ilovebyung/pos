@@ -1,8 +1,9 @@
 import streamlit as st
-import sqlite3
 from datetime import datetime
-from utils.util import load_css, format_price
+from utils.util import format_price
 from utils.database import  get_db_connection
+from utils.style import load_css
+
 
 # Set selected_service_area 7
 if 'selected_service_area' not in st.session_state:
@@ -83,6 +84,11 @@ def create_order():
     if not st.session_state.cart:
         return False
     
+    # Check if service area is selected
+    if not st.session_state.get('selected_service_area'):
+        st.error("Select a service area to continue.")
+        return False
+    
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -107,7 +113,12 @@ def create_order():
         return True
     except Exception as e:
         conn.rollback()
-        st.error(f"Error creating order: {e}")
+        # Check if the error is related to service_area_id NOT NULL constraint
+        error_message = str(e)
+        if "NOT NULL constraint failed: Order_Cart.service_area_id" in error_message:
+            st.error("Select a service area to continue.")
+        else:
+            st.error(f"Error creating order: {e}")
         return False
     finally:
         conn.close()
@@ -120,9 +131,23 @@ def show_order_page():
         page_icon="🛒",
         layout="wide"
     )
+    
+    load_css()
 
     st.title("🛒 Order Cart")
-    st.caption(f"Service area: {st.session_state.selected_service_area} | Order #{st.session_state.order_id or 'New'}")
+    
+    # Check if service area is selected and display appropriate message
+    service_area_display = st.session_state.get('selected_service_area', 'Not Selected')
+    if not st.session_state.get('selected_service_area'):
+        st.warning("⚠️ No service area selected. Please select a service area first.")
+        st.caption(f"Service area: {service_area_display} | Order #{st.session_state.order_id or 'New'}")
+        
+        # Add button to go back to service area selection
+        if st.button("🔙 Go to Service Area Selection", type="primary"):
+            st.switch_page("pages/1_Service_Area.py")
+    else:
+        st.caption(f"Service area: {service_area_display} | Order #{st.session_state.order_id or 'New'}")
+    
     st.markdown("---")
 
     # Create two columns
@@ -168,8 +193,13 @@ def show_order_page():
         subtotal = calculate_subtotal()
         st.subheader(f"Subtotal: {format_price(subtotal)}")
         
-        # Checkout button
-        if st.button("Checkout", type="primary", use_container_width=True, disabled=len(st.session_state.cart) == 0):
+        # Checkout button - disabled if no service area selected or cart is empty
+        checkout_disabled = (
+            len(st.session_state.cart) == 0 or 
+            not st.session_state.get('selected_service_area')
+        )
+        
+        if st.button("Checkout", type="primary", use_container_width=True, disabled=checkout_disabled):
             if create_order():
                 st.success("Order created successfully!")
                 # Clear cart after successful order
@@ -226,4 +256,4 @@ def show_order_page():
 
 # Run the page
 if __name__ == "__main__":
-    show_order_page() 
+    show_order_page()
