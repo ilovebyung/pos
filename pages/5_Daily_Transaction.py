@@ -225,7 +225,7 @@ else:
     # Display the data editor
     edited_df = st.data_editor(
         display_df,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
         disabled=True,
         num_rows="dynamic",

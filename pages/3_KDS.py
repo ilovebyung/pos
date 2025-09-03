@@ -109,7 +109,7 @@ def display_order_card(order, items):
         """, unsafe_allow_html=True)
         
         # Confirm button outside the card
-        if st.button("Confirm", key=f"confirm_{order['order_id']}", use_container_width=True):
+        if st.button("Confirm", key=f"confirm_{order['order_id']}", width='stretch'):
             if confirm_order(order['order_id']):
                 st.success(f"Order {order['order_id']} confirmed!")
                 st.rerun()
@@ -156,7 +156,7 @@ def show_kds_page():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        if st.button("🔀 Refresh", type="primary", use_container_width=True):
+        if st.button("🔀 Refresh", type="primary", width='stretch'):
             st.rerun()
 
 

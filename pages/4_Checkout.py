@@ -247,65 +247,65 @@ def show_checkout_page():
             # Row 1
             calc_col1, calc_col2, calc_col3 = st.columns(3)
             with calc_col1:
-                if st.button("7", key="calc_7", use_container_width=True):
+                if st.button("7", key="calc_7", width='stretch'):
                     handle_calculator_input("7")
                     st.rerun()
             with calc_col2:
-                if st.button("8", key="calc_8", use_container_width=True):
+                if st.button("8", key="calc_8", width='stretch'):
                     handle_calculator_input("8")
                     st.rerun()
             with calc_col3:
-                if st.button("9", key="calc_9", use_container_width=True):
+                if st.button("9", key="calc_9", width='stretch'):
                     handle_calculator_input("9")
                     st.rerun()
             
             # Row 2
             calc_col1, calc_col2, calc_col3 = st.columns(3)
             with calc_col1:
-                if st.button("4", key="calc_4", use_container_width=True):
+                if st.button("4", key="calc_4", width='stretch'):
                     handle_calculator_input("4")
                     st.rerun()
             with calc_col2:
-                if st.button("5", key="calc_5", use_container_width=True):
+                if st.button("5", key="calc_5", width='stretch'):
                     handle_calculator_input("5")
                     st.rerun()
             with calc_col3:
-                if st.button("6", key="calc_6", use_container_width=True):
+                if st.button("6", key="calc_6", width='stretch'):
                     handle_calculator_input("6")
                     st.rerun()
             
             # Row 3
             calc_col1, calc_col2, calc_col3 = st.columns(3)
             with calc_col1:
-                if st.button("1", key="calc_1", use_container_width=True):
+                if st.button("1", key="calc_1", width='stretch'):
                     handle_calculator_input("1")
                     st.rerun()
             with calc_col2:
-                if st.button("2", key="calc_2", use_container_width=True):
+                if st.button("2", key="calc_2", width='stretch'):
                     handle_calculator_input("2")
                     st.rerun()
             with calc_col3:
-                if st.button("3", key="calc_3", use_container_width=True):
+                if st.button("3", key="calc_3", width='stretch'):
                     handle_calculator_input("3")
                     st.rerun()
             
             # Row 4
             calc_col1, calc_col2, calc_col3 = st.columns(3)
             with calc_col1:
-                if st.button("0", key="calc_0", use_container_width=True):
+                if st.button("0", key="calc_0", width='stretch'):
                     handle_calculator_input("0")
                     st.rerun()
             with calc_col2:
-                if st.button(".", key="calc_.", use_container_width=True):
+                if st.button(".", key="calc_.", width='stretch'):
                     handle_calculator_input(".")
                     st.rerun()
             with calc_col3:
-                if st.button("Delete", key="calc_delete", use_container_width=True):
+                if st.button("Delete", key="calc_delete", width='stretch'):
                     handle_calculator_input("delete")
                     st.rerun()
             
             # Enter button
-            if st.button("Enter", key="calc_enter", use_container_width=True, type="primary"):
+            if st.button("Enter", key="calc_enter", width='stretch', type="primary"):
                 handle_calculator_input("enter")
                 st.rerun()
         
@@ -314,24 +314,24 @@ def show_checkout_page():
             st.markdown("### Payment Type")
             
             # Payment type buttons
-            if st.button("Credit", key="credit", use_container_width=True, type="secondary"):
+            if st.button("Credit", key="credit", width='stretch', type="secondary"):
                 pass
             
-            if st.button("Cash", key="cash", use_container_width=True, type="secondary"):
+            if st.button("Cash", key="cash", width='stretch', type="secondary"):
                 pass
             
             st.markdown("---")
             
             # Tips buttons
             st.markdown("**Tips**")
-            if st.button("Tips", key="tips_button", use_container_width=True, type="secondary"):
+            if st.button("Tips", key="tips_button", width='stretch', type="secondary"):
                 # Use current input as tips if available
                 if st.session_state.current_input:
                     st.session_state.tips_amount = int(float(st.session_state.current_input) * 100)
                     st.session_state.current_input = ""
                     st.rerun()
 
-            if st.button("Clear Tips", key="clear_tips_button", use_container_width=True, type="secondary"):
+            if st.button("Clear Tips", key="clear_tips_button", width='stretch', type="secondary"):
                 st.session_state.tips_amount = 0
                 st.rerun()
         
@@ -344,7 +344,7 @@ def show_checkout_page():
             split_col1, split_col2, split_col3 = st.columns([1, 2, 1])
             
             with split_col1:
-                if st.button("➖", key="split_minus", use_container_width=True):
+                if st.button("➖", key="split_minus", width='stretch'):
                     if st.session_state.split_count > 1:
                         st.session_state.split_count -= 1
                         st.rerun()
@@ -353,7 +353,7 @@ def show_checkout_page():
                 st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: #f0f0f0; border-radius: 4px; font-weight: bold; font-size: 18px;'>{st.session_state.split_count}</div>", unsafe_allow_html=True)
             
             with split_col3:
-                if st.button("➕", key="split_plus", use_container_width=True):
+                if st.button("➕", key="split_plus", width='stretch'):
                     st.session_state.split_count += 1
                     st.rerun()
             
@@ -367,7 +367,7 @@ def show_checkout_page():
             st.markdown("---")
             
             # Settle Button
-            if st.button("Settle", key="settle", use_container_width=True, type="primary"):
+            if st.button("Settle", key="settle", width='stretch', type="primary"):
                 # Calculate total charged (subtotal + tax + tips)
                 total_charged = subtotal + TAX + total_tips
                 

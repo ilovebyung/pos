@@ -1,6 +1,4 @@
 import streamlit as st
-import sqlite3
-import os
 from datetime import datetime
 from utils.database import get_db_connection
 from utils.style import load_css 
@@ -28,9 +26,10 @@ def update_service_area_status(service_area_id):
     """Update service area status to occupied (1)"""
     conn = get_db_connection()
     cursor = conn.cursor()
+    timestamp = datetime.now().isoformat()
     cursor.execute(
         'UPDATE Service_Area SET status = 1, timestamp = ? WHERE service_area_id = ?',
-        (datetime.now(), service_area_id)
+        (timestamp, service_area_id)
     )
     conn.commit()
     conn.close()
@@ -89,7 +88,7 @@ for i, area in enumerate(service_areas):
                 f"🔴 {service_area_id} - {description} (Occupied)",
                 key=f"occupied_area_{service_area_id}",
                 disabled=True,
-                use_container_width=True
+                width='stretch'
             )
 
 # Add some spacing
@@ -98,7 +97,7 @@ st.markdown("---")
 # Refresh button to reset all statuses
 col_refresh1, col_refresh2, col_refresh3 = st.columns([1, 1, 1])
 with col_refresh2:
-    if st.button("🔀 Refresh", type="primary", use_container_width=True):
+    if st.button("🔀 Refresh", type="primary", width='stretch'):
         reset_all_statuses()
         st.rerun()
 
