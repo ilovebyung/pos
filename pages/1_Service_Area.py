@@ -98,7 +98,7 @@ st.markdown("---")
 # Refresh button to reset all statuses
 col_refresh1, col_refresh2, col_refresh3 = st.columns([1, 1, 1])
 with col_refresh2:
-    if st.button("🔄 Refresh", type="primary", use_container_width=True):
+    if st.button("🔀 Refresh", type="primary", use_container_width=True):
         reset_all_statuses()
         st.rerun()
 

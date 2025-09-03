@@ -138,7 +138,7 @@ else:
     st.sidebar.info(f"Selected: {start_date} to {end_date}")
 
 # Main content
-if st.sidebar.button("🔄 Refresh Data", type="primary"):
+if st.sidebar.button("🔀 Refresh Data", type="primary"):
     st.cache_data.clear()
 
 # Get and display summary statistics
