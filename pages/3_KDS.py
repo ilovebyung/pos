@@ -156,9 +156,9 @@ def show_kds_page():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        if st.button("🔀 Refresh", use_container_width=False):
+        if st.button("🔀 Refresh", type="primary", use_container_width=True):
             st.rerun()
-    
+
 
 # Run the page
 if __name__ == "__main__":

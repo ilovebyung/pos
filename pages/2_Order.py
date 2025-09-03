@@ -247,7 +247,7 @@ def show_order_page():
                                     label_visibility="collapsed"
                                 )
                                 
-                                if st.button("Add", key=f"add_{product_id}", type="primary"):
+                                if st.button("Add", key=f"add_{product_id}", type="primary", use_container_width=True):
                                     option_value = None if selected_option == "No option" else selected_option
                                     add_to_cart(product_id, product_name, price, option_value)
                                     st.rerun()

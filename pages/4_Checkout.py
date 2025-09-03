@@ -1,53 +1,26 @@
 import streamlit as st
-import sqlite3
-from datetime import datetime
-from utils.util import format_price,  calculate_split_amounts
+from utils.util import format_price, calculate_split_amounts 
 from utils.database import get_db_connection
 from utils.style import load_css 
-import streamlit as st
-import sqlite3
 
-import streamlit as st
-import sqlite3
-from datetime import datetime
-
-# Format price helper
-def format_price(cents):
-    return f"${cents / 100:.2f}"
-
-# Calculate split amounts
-def calculate_split_amounts(total, split_count):
-    base_amount = total // split_count
-    remainder = total % split_count
+# Get available service areas
+def get_available_service_areas():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     
-    amounts = [base_amount] * split_count
-    for i in range(remainder):
-        amounts[i] += 1
+    cursor.execute("""
+        SELECT DISTINCT oc.service_area_id
+        FROM Order_Cart oc 
+        WHERE oc.order_status IN (1, 2) 
+        ORDER BY oc.service_area_id
+    """)
     
-    return amounts
-
-# Initialize session state
-def init_session_state():
-    if 'selected_service_area' not in st.session_state:
-        st.session_state.selected_service_area = 7
-    
-    if 'tips_amount' not in st.session_state:
-        st.session_state.tips_amount = 0
-    
-    if 'amount_tendered' not in st.session_state:
-        st.session_state.amount_tendered = 0
-    
-    if 'current_input' not in st.session_state:
-        st.session_state.current_input = ""
-    
-    if 'split_count' not in st.session_state:
-        st.session_state.split_count = 1
-    
-    if 'split_amounts' not in st.session_state:
-        st.session_state.split_amounts = []
+    results = cursor.fetchall()
+    conn.close()
+    return [row['service_area_id'] for row in results]
 
 # Get order details
-def get_order_details():
+def get_order_details(service_area_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -67,14 +40,14 @@ def get_order_details():
         LEFT JOIN Product_Item pi ON op.product_id = pi.product_id
         WHERE oc.service_area_id = ? AND oc.order_status = 2
         ORDER BY oc.order_id, pi.description
-    """, (st.session_state.selected_service_area,))
+    """, (service_area_id,))
     
     results = cursor.fetchall()
     conn.close()
     return results
 
 # Update order status and service area
-def settle_order(order_ids, total_charged):
+def settle_order(order_ids, total_charged, service_area_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -92,7 +65,7 @@ def settle_order(order_ids, total_charged):
             UPDATE Service_Area 
             SET status = 0 
             WHERE service_area_id = ?
-        """, (st.session_state.selected_service_area,))
+        """, (service_area_id,))
         
         conn.commit()
         return True
@@ -117,6 +90,18 @@ def handle_calculator_input(value):
         amount = value[1:]
         st.session_state.amount_tendered = int(float(amount) * 100)
 
+# Initialize session state
+def initialize_session_state():
+    if 'selected_service_area' not in st.session_state:
+        st.session_state.selected_service_area = None
+    if 'tips_amount' not in st.session_state:
+        st.session_state.tips_amount = 0
+    if 'amount_tendered' not in st.session_state:
+        st.session_state.amount_tendered = 0
+    if 'current_input' not in st.session_state:
+        st.session_state.current_input = ""
+    if 'split_count' not in st.session_state:
+        st.session_state.split_count = 1
 
 # Main checkout page
 def show_checkout_page():
@@ -126,253 +111,276 @@ def show_checkout_page():
         layout="wide"
     )
     load_css()
+    initialize_session_state()
 
     st.title("💳 Checkout")
     st.markdown("---")
 
-    init_session_state()
+    # FOUR COLUMN LAYOUT
+    col1, col2, col3, col4 = st.columns([2, 1.4, 1, 1])
     
-    # Get order data
-    order_data = get_order_details()
-    
-    if not order_data:
-        st.error("No confirmed orders found for this service area.")
-        return
-    
-    # Process order data
-    orders = {}
-    subtotal = 0
-    
-    for row in order_data:
-        order_id = row['order_id']
-        if order_id not in orders:
-            orders[order_id] = []
-        
-        if row['product_id']:  # Check if product exists
-            orders[order_id].append({
-                'description': row['description'],
-                'option': row['option'],
-                'quantity': row['product_quantity'],
-                'price': row['price']
-            })
-            subtotal += row['price'] * row['product_quantity']
-    
-    # Constants
-    TAX = 203  # $2.03
-    
-    # Calculate totals
-    total_tips = st.session_state.tips_amount
-    balance_due = subtotal + TAX + total_tips
-    remaining_balance = balance_due - st.session_state.amount_tendered
-    
-    # THREE COLUMN LAYOUT
-    col1, col2, col3 = st.columns([2, 1.5, 1.5])
-    
-    # COLUMN 1: ORDER CART
+    # COLUMN 1: SERVICE AREA DROPDOWN
     with col1:
-        st.markdown(f"""
-        <div class="order-cart">
-            <div class="order-header">
-                Order Cart<br>
-                service_area: {st.session_state.selected_service_area} &nbsp;&nbsp; Order_id {', '.join(map(str, orders.keys()))}
-            </div>
-            <table class="cart-table">
-                <tr>
-                    <th class="cart-header">Product Item</th>
-                    <th class="cart-header">Quantity</th>
-                    <th class="cart-header">Price</th>
-                </tr>
-        """, unsafe_allow_html=True)
+        st.markdown("### Select Service Area")
         
-        for order_id, items in orders.items():
-            for item in items:
-                item_display = item['description']
-                if item['option']:
-                    item_display += f"<br>({item['option']})"
-                
-                st.markdown(f"""
-                    <tr>
-                        <td class="cart-row">{item_display}</td>
-                        <td class="cart-row">{item['quantity']}</td>
-                        <td class="cart-row">{format_price(item['price'] * item['quantity'])}</td>
-                    </tr>
-                """, unsafe_allow_html=True)
+        # Get available service areas
+        available_areas = get_available_service_areas()
         
-        st.markdown("</table></div>", unsafe_allow_html=True)
+        if not available_areas:
+            st.error("No service areas with pending orders found.")
+            return
         
-        # Payment Section
-        st.markdown('<div class="payment-header">Payment</div>', unsafe_allow_html=True)
+        # Service area dropdown
+        selected_area = st.selectbox(
+            "Service Area ID:",
+            options=[None] + available_areas,
+            format_func=lambda x: "Select..." if x is None else str(x),
+            key="service_area_dropdown"
+        )
         
-        payment_items = [
-            ("Subtotal", subtotal),
-            ("Tax", TAX),
-            ("Tips", total_tips)
-        ]
-        
-        for label, amount in payment_items:
-            st.markdown(f"""
-            <div class="payment-row">
-                <span>{label}</span>
-                <span>{format_price(amount)}</span>
-            </div>
-            """, unsafe_allow_html=True)
-        
-
-    
-    # COLUMN 2: NUMBER PAD
-    with col2:
-        # Balance Display - moved from column 1
-        st.markdown(f"""
-        <div class="balance-header">Remaining Balance / Change Due</div>
-        <div class="balance-amount">{format_price(remaining_balance)}</div>            
-        """, unsafe_allow_html=True)
-        
-        # Display current input - moved from column 1
-        if st.session_state.current_input:
-            st.markdown(f"**Current input:** ${st.session_state.current_input}")
-        else:
-            st.markdown(f"**Current input:** ${0}")
-
-        st.markdown("### Number Pad")
-        
-        # Calculator Grid - 4x3 layout
-        # Row 1
-        calc_col1, calc_col2, calc_col3 = st.columns(3)
-        with calc_col1:
-            if st.button("7", key="calc_7", use_container_width=True):
-                handle_calculator_input("7")
-                st.rerun()
-        with calc_col2:
-            if st.button("8", key="calc_8", use_container_width=True):
-                handle_calculator_input("8")
-                st.rerun()
-        with calc_col3:
-            if st.button("9", key="calc_9", use_container_width=True):
-                handle_calculator_input("9")
-                st.rerun()
-        
-        # Row 2
-        calc_col1, calc_col2, calc_col3 = st.columns(3)
-        with calc_col1:
-            if st.button("4", key="calc_4", use_container_width=True):
-                handle_calculator_input("4")
-                st.rerun()
-        with calc_col2:
-            if st.button("5", key="calc_5", use_container_width=True):
-                handle_calculator_input("5")
-                st.rerun()
-        with calc_col3:
-            if st.button("6", key="calc_6", use_container_width=True):
-                handle_calculator_input("6")
-                st.rerun()
-        
-        # Row 3
-        calc_col1, calc_col2, calc_col3 = st.columns(3)
-        with calc_col1:
-            if st.button("1", key="calc_1", use_container_width=True):
-                handle_calculator_input("1")
-                st.rerun()
-        with calc_col2:
-            if st.button("2", key="calc_2", use_container_width=True):
-                handle_calculator_input("2")
-                st.rerun()
-        with calc_col3:
-            if st.button("3", key="calc_3", use_container_width=True):
-                handle_calculator_input("3")
-                st.rerun()
-        
-        # Row 4
-        calc_col1, calc_col2, calc_col3 = st.columns(3)
-        with calc_col1:
-            if st.button("0", key="calc_0", use_container_width=True):
-                handle_calculator_input("0")
-                st.rerun()
-        with calc_col2:
-            if st.button(".", key="calc_.", use_container_width=True):
-                handle_calculator_input(".")
-                st.rerun()
-        with calc_col3:
-            if st.button("Delete", key="calc_delete", use_container_width=True):
-                handle_calculator_input("delete")
-                st.rerun()
-        
-        # Enter button
-        if st.button("Enter", key="calc_enter", use_container_width=True, type="primary"):
-            handle_calculator_input("enter")
-            st.rerun()
-    
-    # COLUMN 3: ACTION BUTTONS
-    with col3:
-        st.markdown("### Payment & Actions")
-        
-        # Payment type buttons
-        if st.button("Credit", key="credit", use_container_width=True, type="secondary"):
-            pass
-        
-        if st.button("Cash", key="cash", use_container_width=True, type="secondary"):
-            pass
-        
-        st.markdown("---")
-        
-        # Tips buttons
-        st.markdown("**Tips**")
-        if st.button("Tips", key="tips_button", use_container_width=True, type="secondary"):
-            # Use current input as tips if available
-            if st.session_state.current_input:
-                st.session_state.tips_amount = int(float(st.session_state.current_input) * 100)
-                st.session_state.current_input = ""
-                st.rerun()
-
-        if st.button("No Tips", key="no_tips_button", use_container_width=True, type="secondary"):
-            st.session_state.tips_amount = 0
-            st.rerun()
-        
-        st.markdown("---")
-        
-        # Split evenly section
-        st.markdown("**Split Evenly**")
-        
-        # Split counter controls
-        split_col1, split_col2, split_col3 = st.columns([1, 2, 1])
-        
-        with split_col1:
-            if st.button("➖", key="split_minus", use_container_width=True):
-                if st.session_state.split_count > 1:
-                    st.session_state.split_count -= 1
-                    st.rerun()
-        
-        with split_col2:
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: #f0f0f0; border-radius: 4px; font-weight: bold; font-size: 18px;'>{st.session_state.split_count}</div>", unsafe_allow_html=True)
-        
-        with split_col3:
-            if st.button("➕", key="split_plus", use_container_width=True):
-                st.session_state.split_count += 1
-                st.rerun()
-        
-        # Calculate and display split amounts
-        if st.session_state.split_count > 1:
-            split_amounts = calculate_split_amounts(balance_due, st.session_state.split_count)
-            st.markdown("**Split amounts:**")
-            for i, amount in enumerate(split_amounts):
-                st.markdown(f"<div class='split-amount'>Person {i+1}: {format_price(amount)}</div>", unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        # Settle Button
-        if st.button("Settle", key="settle", use_container_width=True, type="primary"):
-            # Calculate total charged (subtotal + tax + tips)
-            total_charged = subtotal + TAX + total_tips
+        if selected_area:
+            st.session_state.selected_service_area = selected_area
             
-            if settle_order(list(orders.keys()), total_charged):
-                # Clear session state
-                st.session_state.selected_service_area = None
-                st.session_state.tips_amount = 0
-                st.session_state.amount_tendered = 0
-                st.session_state.current_input = ""
-                st.session_state.split_count = 1
+            # Get order data only after service area is selected
+            order_data = get_order_details(selected_area)
+            
+            if not order_data:
+                st.error("No confirmed orders found for this service area.")
+                return
+            
+            # Process order data
+            orders = {}
+            subtotal = 0
+            
+            for row in order_data:
+                order_id = row['order_id']
+                if order_id not in orders:
+                    orders[order_id] = []
                 
-                st.success("Order settled successfully!")
-                st.switch_page("pages/1_Service_Area.py")
+                if row['product_id']:  # Check if product exists
+                    orders[order_id].append({
+                        'description': row['description'],
+                        'option': row['option'],
+                        'quantity': row['product_quantity'],
+                        'price': row['price']
+                    })
+                    subtotal += row['price'] * row['product_quantity']
+            
+            # Display Order Cart
+            st.markdown("---")
+            st.markdown(f"""
+            <div class="order-cart">
+                <div class="order-header">
+                    Order Cart<br>
+                    service_area: {selected_area} &nbsp;&nbsp; Order_id {', '.join(map(str, orders.keys()))}
+                </div>
+                <table class="cart-table">
+                    <tr>
+                        <th class="cart-header">Product Item</th>
+                        <th class="cart-header">Quantity</th>
+                        <th class="cart-header">Price</th>
+                    </tr>
+            """, unsafe_allow_html=True)
+            
+            for order_id, items in orders.items():
+                for item in items:
+                    item_display = item['description']
+                    if item['option']:
+                        item_display += f"<br>({item['option']})"
+                    
+                    st.markdown(f"""
+                        <tr>
+                            <td class="cart-row">{item_display}</td>
+                            <td class="cart-row">{item['quantity']}</td>
+                            <td class="cart-row">{format_price(item['price'] * item['quantity'])}</td>
+                        </tr>
+                    """, unsafe_allow_html=True)
+            
+            st.markdown("</table></div>", unsafe_allow_html=True)
+            
+            # Payment Section
+            st.markdown('<div class="payment-header">Payment</div>', unsafe_allow_html=True)
+            
+            # Constants
+            TAX = 203  # $2.03
+            
+            payment_items = [
+                ("Subtotal", subtotal),
+                ("Tax", TAX),
+                ("Tips", st.session_state.tips_amount)
+            ]
+            
+            for label, amount in payment_items:
+                st.markdown(f"""
+                <div class="payment-row">
+                    <span>{label}</span>
+                    <span>{format_price(amount)}</span>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("Please select a service area to proceed with checkout.")
+    
+    # Only show remaining columns if service area is selected
+    if st.session_state.selected_service_area and 'orders' in locals():
+        # Calculate totals
+        total_tips = st.session_state.tips_amount
+        balance_due = subtotal + TAX + total_tips
+        remaining_balance = balance_due - st.session_state.amount_tendered
+        
+        # COLUMN 2: NUMBER PAD
+        with col2:
+            # Balance Display
+            st.markdown(f"""
+            <div class="balance-header">Remaining Balance / Change Due</div>
+            <div class="balance-amount">{format_price(remaining_balance)}</div>            
+            """, unsafe_allow_html=True)
+            
+            # Display current input
+            if st.session_state.current_input:
+                st.markdown(f"**Current input:** ${st.session_state.current_input}")
+            else:
+                st.markdown(f"**Current input:** ${0}")
+
+            st.markdown("### Number Pad")
+            
+            # Calculator Grid - 4x3 layout
+            # Row 1
+            calc_col1, calc_col2, calc_col3 = st.columns(3)
+            with calc_col1:
+                if st.button("7", key="calc_7", use_container_width=True):
+                    handle_calculator_input("7")
+                    st.rerun()
+            with calc_col2:
+                if st.button("8", key="calc_8", use_container_width=True):
+                    handle_calculator_input("8")
+                    st.rerun()
+            with calc_col3:
+                if st.button("9", key="calc_9", use_container_width=True):
+                    handle_calculator_input("9")
+                    st.rerun()
+            
+            # Row 2
+            calc_col1, calc_col2, calc_col3 = st.columns(3)
+            with calc_col1:
+                if st.button("4", key="calc_4", use_container_width=True):
+                    handle_calculator_input("4")
+                    st.rerun()
+            with calc_col2:
+                if st.button("5", key="calc_5", use_container_width=True):
+                    handle_calculator_input("5")
+                    st.rerun()
+            with calc_col3:
+                if st.button("6", key="calc_6", use_container_width=True):
+                    handle_calculator_input("6")
+                    st.rerun()
+            
+            # Row 3
+            calc_col1, calc_col2, calc_col3 = st.columns(3)
+            with calc_col1:
+                if st.button("1", key="calc_1", use_container_width=True):
+                    handle_calculator_input("1")
+                    st.rerun()
+            with calc_col2:
+                if st.button("2", key="calc_2", use_container_width=True):
+                    handle_calculator_input("2")
+                    st.rerun()
+            with calc_col3:
+                if st.button("3", key="calc_3", use_container_width=True):
+                    handle_calculator_input("3")
+                    st.rerun()
+            
+            # Row 4
+            calc_col1, calc_col2, calc_col3 = st.columns(3)
+            with calc_col1:
+                if st.button("0", key="calc_0", use_container_width=True):
+                    handle_calculator_input("0")
+                    st.rerun()
+            with calc_col2:
+                if st.button(".", key="calc_.", use_container_width=True):
+                    handle_calculator_input(".")
+                    st.rerun()
+            with calc_col3:
+                if st.button("Delete", key="calc_delete", use_container_width=True):
+                    handle_calculator_input("delete")
+                    st.rerun()
+            
+            # Enter button
+            if st.button("Enter", key="calc_enter", use_container_width=True, type="primary"):
+                handle_calculator_input("enter")
+                st.rerun()
+        
+        # COLUMN 3: PAYMENT & TIPS
+        with col3:
+            st.markdown("### Payment Type")
+            
+            # Payment type buttons
+            if st.button("Credit", key="credit", use_container_width=True, type="secondary"):
+                pass
+            
+            if st.button("Cash", key="cash", use_container_width=True, type="secondary"):
+                pass
+            
+            st.markdown("---")
+            
+            # Tips buttons
+            st.markdown("**Tips**")
+            if st.button("Tips", key="tips_button", use_container_width=True, type="secondary"):
+                # Use current input as tips if available
+                if st.session_state.current_input:
+                    st.session_state.tips_amount = int(float(st.session_state.current_input) * 100)
+                    st.session_state.current_input = ""
+                    st.rerun()
+
+            if st.button("Clear Tips", key="clear_tips_button", use_container_width=True, type="secondary"):
+                st.session_state.tips_amount = 0
+                st.rerun()
+        
+        # COLUMN 4: SPLIT & SETTLE
+        with col4:
+            # Split evenly section
+            st.markdown("### Split Evenly")
+            
+            # Split counter controls
+            split_col1, split_col2, split_col3 = st.columns([1, 2, 1])
+            
+            with split_col1:
+                if st.button("➖", key="split_minus", use_container_width=True):
+                    if st.session_state.split_count > 1:
+                        st.session_state.split_count -= 1
+                        st.rerun()
+            
+            with split_col2:
+                st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: #f0f0f0; border-radius: 4px; font-weight: bold; font-size: 18px;'>{st.session_state.split_count}</div>", unsafe_allow_html=True)
+            
+            with split_col3:
+                if st.button("➕", key="split_plus", use_container_width=True):
+                    st.session_state.split_count += 1
+                    st.rerun()
+            
+            # Calculate and display split amounts
+            if st.session_state.split_count > 1:
+                split_amounts = calculate_split_amounts(balance_due, st.session_state.split_count)
+                st.markdown("**Split amounts:**")
+                for i, amount in enumerate(split_amounts):
+                    st.markdown(f"<div class='split-amount'>Person {i+1}: {format_price(amount)}</div>", unsafe_allow_html=True)
+            
+            st.markdown("---")
+            
+            # Settle Button
+            if st.button("Settle", key="settle", use_container_width=True, type="primary"):
+                # Calculate total charged (subtotal + tax + tips)
+                total_charged = subtotal + TAX + total_tips
+                
+                if settle_order(list(orders.keys()), total_charged, st.session_state.selected_service_area):
+                    # Clear session state
+                    st.session_state.selected_service_area = None
+                    st.session_state.tips_amount = 0
+                    st.session_state.amount_tendered = 0
+                    st.session_state.current_input = ""
+                    st.session_state.split_count = 1
+                    
+                    st.success("Order settled successfully!")
+                    st.switch_page("pages/1_Service_Area.py")
 
 # Run the page
 if __name__ == "__main__":
