@@ -217,6 +217,10 @@ def show_checkout_page():
                     <span>{format_price(amount)}</span>
                 </div>
                 """, unsafe_allow_html=True)
+            
+            # Tips Warning - Display if tips is larger than subtotal
+            if st.session_state.tips_amount > subtotal:
+                st.warning(f"⚠️ Warning:  Tips amount is larger than subtotal! ")
         else:
             st.info("Please select a service area to proceed with checkout.")
     
