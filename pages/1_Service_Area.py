@@ -42,19 +42,6 @@ def reset_specific_service_area(service_area_id):
     conn.commit()
     conn.close()
 
-# Function to reset all statuses (for the refresh all button)
-def reset_all_statuses():
-    """Reset all service area statuses to available (0)"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('UPDATE Service_Area SET status = 0, timestamp = NULL')
-    conn.commit()
-    conn.close()
-
-# Initialize session state for showing dropdown
-if 'show_refresh_dropdown' not in st.session_state:
-    st.session_state.show_refresh_dropdown = False
-
 # Main page content
 load_css()
 st.title("🍽️ Service Area Selection")
@@ -101,73 +88,59 @@ for i, area in enumerate(service_areas):
                 disabled=True,
                 use_container_width=True
             )
+            
+            # Store selected service area in session state
+            st.session_state.selected_service_area = service_area_id
+            
+            # Navigate to Order page
+            # st.switch_page("pages/2_Order.py")
 
 # Add some spacing
 st.markdown("---")
 
-# Refresh section
-col_refresh1, col_refresh2, col_refresh3 = st.columns([1, 1, 1])
-with col_refresh2:
-    # Main refresh button
-    if st.button("🔁 Reset", type="primary", use_container_width=True):
-        st.session_state.show_refresh_dropdown = True
-        st.rerun()
-    # Show dropdown if refresh button was clicked
-    if st.session_state.show_refresh_dropdown:
-        st.markdown("#### Select Service Area to Reset:")
+# Reset section - display directly without button
+col_reset1, col_reset2, col_reset3 = st.columns([1, 1, 1])
+with col_reset2:
+    st.markdown("#### Select Service Area to Reset:")
+    
+    # Get occupied areas for dropdown
+    occupied_areas = [area for area in service_areas if area['status'] == 1]
+    
+    if occupied_areas:
+        # Create dropdown options (only individual service areas)
+        dropdown_options = {}
+        dropdown_display = []
         
-        # Create options for dropdown
-        occupied_areas = [area for area in service_areas if area['status'] == 1]
+        # Add individual service areas (only occupied ones)
+        for area in occupied_areas:
+            display_text = f"{area['service_area_id']} - {area['description']}"
+            dropdown_display.append(display_text)
+            dropdown_options[display_text] = area['service_area_id']
         
-        if occupied_areas:
-            # Create dropdown options
-            dropdown_options = {}
-            dropdown_display = []
+        # Create selectbox
+        selected_option = st.selectbox(
+            "Choose a service area:",
+            [None] + dropdown_display,
+            format_func=lambda x: "Select..." if x is None else x,
+            key="reset_dropdown"
+        )
+        
+        # Create action buttons
+        if selected_option:
+            # col_action1, col_action2 = st.columns(2)
             
-            # Add "Reset All" option
-            dropdown_display.append("Reset All Service Areas")
-            dropdown_options["Reset All Service Areas"] = "all"
-            
-            # Add individual service areas (only occupied ones)
-            for area in occupied_areas:
-                display_text = f"{area['service_area_id']} - {area['description']}"
-                dropdown_display.append(display_text)
-                dropdown_options[display_text] = area['service_area_id']
-            
-            # Create selectbox
-            selected_option = st.selectbox(
-                "Choose an option:",
-                dropdown_display,
-                key="refresh_dropdown"
-            )
-            
-            # Create action buttons
-            col_action1, col_action2 = st.columns(2)
-            
-            with col_action1:
+            # with col_action1:
                 if st.button("⭕ Confirm Reset", type="primary", use_container_width=True):
                     selected_id = dropdown_options[selected_option]
-                    
-                    if selected_id == "all":
-                        reset_all_statuses()
-                        st.success("All service areas have been reset!")
-                    else:
-                        reset_specific_service_area(selected_id)
-                        st.success(f"Service area {selected_id} has been reset!")
-                    
-                    # Hide dropdown and refresh
-                    st.session_state.show_refresh_dropdown = False
+                    reset_specific_service_area(selected_id)
+                    st.success(f"Service area {selected_id} has been reset!")
                     st.rerun()
             
-            with col_action2:
-                if st.button("❌ Cancel", type="primary", use_container_width=True):
-                    st.session_state.show_refresh_dropdown = False
-                    st.rerun()
-        else:
-            st.info("No occupied service areas to reset.")
-            if st.button("❌ Close", use_container_width=True):
-                st.session_state.show_refresh_dropdown = False
-                st.rerun()
+            # with col_action2:
+            #     if st.button("❌ Clear Selection",  type="primary", use_container_width=True):
+            #         st.rerun()
+    else:
+        st.info("No occupied service areas to reset.")
 
 # Display status information
 st.markdown("### Status Legend")
