@@ -1,9 +1,9 @@
 import streamlit as st
-import sqlite3
-from datetime import datetime
+import time
 from utils.util import format_price
 from utils.database import  get_db_connection 
 from utils.style import load_css 
+from streamlit_autorefresh import st_autorefresh
 
 
 
@@ -152,14 +152,12 @@ def show_kds_page():
             if items:  # Only display if order has items
                 display_order_card(order, items)
     
-    # Auto-refresh every 30 seconds
     st.markdown("---")
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        if st.button("🔀 Refresh", type="primary", width='stretch'):
-            st.rerun()
-
+    st.write("Last updated:", time.strftime("%Y-%m-%d %H:%M:%S"))    
 
 # Run the page
 if __name__ == "__main__":
+    # Note: The st_autorefresh function is set to refresh the page every 10 seconds to keep the KDS updated.
+    st_autorefresh(interval=10 * 1000, limit=None, key="refresh")
     show_kds_page()
+
