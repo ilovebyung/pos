@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from utils.util import format_price, calculate_split_amounts 
 from utils.database import get_db_connection
 from utils.style import load_css 
@@ -168,38 +169,35 @@ def show_checkout_page():
             
             # Display Order Cart
             st.markdown("---")
-            st.markdown(f"""
-            <div class="order-cart">
-                <div class="order-header">
-                    Order Cart<br>
-                    service_area: {selected_area} &nbsp;&nbsp; Order_id {', '.join(map(str, orders.keys()))}
-                </div>
-                <table class="cart-table">
-                    <tr>
-                        <th class="cart-header">Product Item</th>
-                        <th class="cart-header">Quantity</th>
-                        <th class="cart-header">Price</th>
-                    </tr>
-            """, unsafe_allow_html=True)
-            
+
+            # Header
+            st.subheader(f'Service Area: {selected_area}, Order: {", ".join(str(k) for k in orders.keys())}')
+
+            # Prepare table data
+            table_data = []
+
             for order_id, items in orders.items():
                 for item in items:
-                    item_display = item['description']
+                    description = item['description']
                     if item['option']:
-                        item_display += f"<br>({item['option']})"
+                        description += f" ({item['option']})"
                     
-                    st.markdown(f"""
-                        <tr>
-                            <td class="cart-row">{item_display}</td>
-                            <td class="cart-row">{item['quantity']}</td>
-                            <td class="cart-row">{format_price(item['price'] * item['quantity'])}</td>
-                        </tr>
-                    """, unsafe_allow_html=True)
+                    quantity = item['quantity']
+                    total_price = format_price(item['price'] * quantity)
+
+                    table_data.append({
+                        "Description": description,
+                        "Quantity": quantity,
+                        "Total": total_price
+                    })
+
+            # Create DataFrame
+            df = pd.DataFrame(table_data)
+
+            # Display as table
+            st.table(df)  # or use st.dataframe(df) for scrollable, sortable table
             
-            st.markdown("</table></div>", unsafe_allow_html=True)
-            
-            # Payment Section
-            st.markdown('<div class="payment-header">Payment</div>', unsafe_allow_html=True)
+            ## Payment Section
             
             # Constants
             TAX = 203  # $2.03

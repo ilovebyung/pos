@@ -1,0 +1,4 @@
+ipykernel
+streamlit
+st_autorefresh
+

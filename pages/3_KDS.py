@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import time
 from utils.util import format_price
 from utils.database import  get_db_connection 
@@ -71,49 +72,6 @@ def confirm_order(order_id):
     finally:
         conn.close()
 
-# Display individual order card
-
-
-def display_order_card(order, items):
-    with st.container():
-        # Single card with header and content together
-        st.markdown(f"""
-        <div class="order-card">
-            <div class="order-header">
-                <span>Service Area: {order['service_area_id']}</span>
-                <span>Order: {order['order_id']}</span>
-            </div>
-            <div class="order-content">
-                <table class="product-table">
-
-        """, unsafe_allow_html=True)
-        
-        # Display each product item within the same HTML block
-        for item in items:
-            product_display = item['product_name']
-            if item['option']:
-                product_display += f" ({item['option']})"
-            
-            st.markdown(f"""
-                    <tr>
-                        <td class="product-name">{product_display}</td>
-                        <td class="quantity-cell">{item['product_quantity']}</td>
-                    </tr>
-            """, unsafe_allow_html=True)
-        
-        # Close the table and card in one block
-        st.markdown("""
-                </table>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Confirm button outside the card
-        if st.button("Confirm", key=f"confirm_{order['order_id']}", width='stretch'):
-            if confirm_order(order['order_id']):
-                st.success(f"Order {order['order_id']} confirmed!")
-                st.rerun()
-
 # Main KDS page
 def show_kds_page():
     st.set_page_config(
@@ -150,7 +108,18 @@ def show_kds_page():
             items = get_order_items(order['order_id'])
             
             if items:  # Only display if order has items
-                display_order_card(order, items)
+                # display_order_card(order, items)
+                st.subheader(f'Service Area: {order['service_area_id']}, Order: {order['order_id']}') 
+                for item in items:
+                    product_display = item['product_name']
+                    if item['option']:
+                        product_display += f" ({item['option']})"
+                    st.write(f"- {product_display} x {item['product_quantity']}")
+
+                if st.button("Confirm", key=f"confirm_{order['order_id']}", width='stretch'):
+                    if confirm_order(order['order_id']):
+                        st.success(f"Order {order['order_id']} confirmed!")
+                        st.rerun()
     
     st.markdown("---")
     st.write("Last updated:", time.strftime("%Y-%m-%d %H:%M:%S"))    
