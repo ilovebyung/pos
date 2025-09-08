@@ -90,8 +90,7 @@ def show_kds_page():
     
     if not orders:
         st.subheader("""
-                📋 No pending orders 
-                 All caught up! 🎉
+                📋 No pending orders. All caught up! 🎉
             """)
         return
     
