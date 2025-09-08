@@ -194,11 +194,12 @@ def show_checkout_page():
             # Create DataFrame
             df = pd.DataFrame(table_data)
 
+
             # Display as table
-            st.table(df)  # or use st.dataframe(df) for scrollable, sortable table
+            st.table(df.set_index(df.columns[0]))
+            # st.table(df)  # or use st.dataframe(df) for scrollable, sortable table
             
-            ## Payment Section
-            
+            ## Payment Section    
             # Constants
             TAX = 203  # $2.03
             
@@ -325,7 +326,7 @@ def show_checkout_page():
             st.markdown("---")
             
             # Tips buttons
-            st.markdown("**Tips**")
+            st.markdown("### Tips")
             if st.button("Tips", key="tips_button", width='stretch', type="secondary"):
                 # Use current input as tips if available
                 if st.session_state.current_input:
@@ -352,8 +353,8 @@ def show_checkout_page():
                         st.rerun()
             
             with split_col2:
-                st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: #f0f0f0; border-radius: 4px; font-weight: bold; font-size: 18px;'>{st.session_state.split_count}</div>", unsafe_allow_html=True)
-            
+                st.markdown(f"<div style='text-align: center; padding: 1.5rem; font-weight: bold; font-size: 18px;'>{st.session_state.split_count}</div>", unsafe_allow_html=True)
+
             with split_col3:
                 if st.button("➕", key="split_plus", width='stretch'):
                     st.session_state.split_count += 1

@@ -89,12 +89,10 @@ def show_kds_page():
     orders = get_open_orders()
     
     if not orders:
-        st.markdown("""
-        <div class="no-orders">
-            📋 No pending orders<br>
-            <small>All caught up! 🎉</small>
-        </div>
-        """, unsafe_allow_html=True)
+        st.subheader("""
+                📋 No pending orders 
+                 All caught up! 🎉
+            """)
         return
     
     # Display orders in three fixed columns
