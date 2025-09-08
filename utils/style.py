@@ -100,7 +100,7 @@ def load_css():
     }
 
     .stButton > button[kind="secondary"] {
-        height: 80px;
+        height: 40px;
         background-color: #1f77b4;
         color: white;
         border: 2px solid #1f77b4;

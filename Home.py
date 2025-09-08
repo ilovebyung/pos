@@ -4,10 +4,9 @@ import os
 # Set page config
 st.set_page_config(page_title="Home", page_icon="🏠", layout="wide")
 st.title("🏠 Welcome to POS Home ")
-st.markdown("---")
 
 # Navigation hint
-st.markdown("👉 Use the sidebar to navigate to the service area page.")
+st.subheader("👈 Use the sidebar to navigate")
 
 
 # Add vertical space to push the caption down

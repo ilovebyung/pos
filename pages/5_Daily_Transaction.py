@@ -138,7 +138,7 @@ else:
     st.sidebar.info(f"Selected: {start_date} to {end_date}")
 
 # Main content
-if st.sidebar.button("🔀 Refresh Data", type="primary"):
+if st.sidebar.button("Refresh Data", type="primary"):
     st.cache_data.clear()
 
 # Get and display summary statistics
@@ -205,7 +205,6 @@ else:
     display_df = display_df.rename(columns=column_mapping)
     
     # Display options
-    st.subheader("Display Options")
     items_per_page = st.selectbox("Items per page", [10, 25, 50, 100], index=1)
 
     # Show detailed view with pagination
