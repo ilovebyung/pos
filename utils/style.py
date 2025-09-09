@@ -25,9 +25,27 @@ def load_css():
         background-color: var(--background-color);
     }
     
-    /* Main container padding */
+    /* Remove Streamlit's default top padding/margin */
+    .main .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        max-width: none !important;
+    }
+    
+    /* Target the main content area */
+    .stApp > header {
+        height: 0;
+    }
+    
+    /* Reduce top spacing in main container */
     .main > div {
-        padding: 2rem 1rem;
+        padding: 0.5rem 1rem !important;
+    }
+    
+    /* Remove top margin from first element */
+    .main > div > div:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
     }
 
     /* Page title and header styling */
@@ -35,6 +53,7 @@ def load_css():
         color: var(--text-color);
         border-bottom: 3px solid var(--primary-color);
         padding-bottom: 10px;
+        margin-top: 0 !important;
         margin-bottom: 20px;
         font-weight: bold;
     }
@@ -231,7 +250,11 @@ def load_css():
     /* Responsive design for smaller screens */
     @media (max-width: 768px) {
         .main > div {
-            padding: 1rem 0.5rem;
+            padding: 0.25rem !important;
+        }
+        
+        .main .block-container {
+            padding-top: 0.5rem !important;
         }
         
         div.stButton > button {

@@ -89,7 +89,7 @@ def get_summary_data(start_date, end_date):
         conn.close()
 
 # Sidebar for date selection
-st.sidebar.header("📅 Date Selection")
+st.sidebar.header(" Date Selection")
 
 # Date range selection
 date_option = st.sidebar.radio(
@@ -142,7 +142,7 @@ if st.sidebar.button("Refresh Data", type="primary"):
     st.cache_data.clear()
 
 # Get and display summary statistics
-st.subheader("📈 Summary Statistics")
+st.subheader(" Summary Statistics")
 summary = get_summary_data(start_date, end_date)
 
 if summary:
@@ -160,7 +160,7 @@ if summary:
 st.divider()
 
 # Get transaction data
-st.subheader("🛒 Transaction Details")
+st.subheader(" Transaction Details")
 df = get_transaction_data(start_date, end_date)
 
 if df.empty:
@@ -251,7 +251,7 @@ else:
 # Export functionality
 if not df.empty:
     st.divider()
-    st.subheader("📥 Export Data")
+    st.subheader(" Export Data")
     
     col1, col2 = st.columns(2)
     with col1:
