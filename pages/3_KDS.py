@@ -4,7 +4,7 @@ import time
 from utils.util import format_price
 from utils.database import  get_db_connection 
 from utils.style import load_css 
-from streamlit_autorefresh import st_autorefresh
+# from streamlit_autorefresh import st_autorefresh
 
 
 
@@ -124,6 +124,6 @@ def show_kds_page():
 # Run the page
 if __name__ == "__main__":
     # Note: The st_autorefresh function is set to refresh the page every 10 seconds to keep the KDS updated.
-    st_autorefresh(interval=10 * 1000, limit=None, key="refresh")
+    # st_autorefresh(interval=10 * 1000, limit=None, key="refresh")
     show_kds_page()
 
