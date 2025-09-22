@@ -62,6 +62,7 @@ l10n/
 *.cache
 # development 
 sandbox.py
+sandbox/**
 split.py
 pos.db
 *.db 
