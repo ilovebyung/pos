@@ -16,35 +16,35 @@ if 'cart' not in st.session_state:
 if 'order_id' not in st.session_state:
     st.session_state.order_id = None
 
-def get_product_groups():
+def get_category():
     """Get all product groups"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT product_group_id, description FROM Product_Group ORDER BY product_group_id")
+    cursor.execute("SELECT category_id, description FROM category ORDER BY category_id")
     groups = cursor.fetchall()
     conn.close()
     return groups
 
-def get_product_items(group_id):
-    """Get product items for a specific group"""
+def get_Products(group_id):
+    """Get product for a specific category"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
         SELECT product_id, description, price 
-        FROM Product_Item 
-        WHERE product_group_id = ?
+        FROM Product 
+        WHERE category_id = ?
         ORDER BY product_id
     ''', (group_id,))
     items = cursor.fetchall()
     conn.close()
     return items
 
-def get_product_options(product_id):
-    """Get product options for a specific product item"""
+def get_modifier(product_id):
+    """Get product modifier for a specific product """
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT option FROM Product_Option 
+        SELECT description FROM modifier 
         WHERE product_id = ?
     ''', (product_id,))
     options = cursor.fetchall()
@@ -105,9 +105,9 @@ def create_order():
         # Insert items into Order_Product
         for item in st.session_state.cart:
             cursor.execute('''
-                INSERT INTO Order_Product (order_id, product_id, option, product_quantity)
-                VALUES (?, ?, ?, ?)
-            ''', (order_id, item['product_id'], item['option'], item['quantity']))
+                INSERT INTO Order_Product (order_id, product_id, product_quantity)
+                VALUES (?, ?, ?)
+            ''', (order_id, item['product_id'], item['quantity']))
         
         conn.commit()
         return True
@@ -212,20 +212,20 @@ def show_order_page():
         st.subheader("Menu")
         
         # Get product groups
-        product_groups = get_product_groups()
+        category = get_category()
         
         # Create tabs for product groups
-        if product_groups:
-            group_names = [group[1] for group in product_groups]
+        if category:
+            group_names = [group[1] for group in category]
             tabs = st.tabs(group_names)
             
-            for i, (group_id, group_name) in enumerate(product_groups):
+            for i, (group_id, group_name) in enumerate(category):
                 with tabs[i]:
                     # Get product items for this group
-                    product_items = get_product_items(group_id)
+                    Products = get_Products(group_id)
                     
                     # Display product items
-                    for product_id, product_name, price in product_items:
+                    for product_id, product_name, price in Products:
                         with st.container():
                             item_col1, item_col2 = st.columns([3, 1])
                             
@@ -235,7 +235,7 @@ def show_order_page():
                             
                             with item_col2:
                                 # Product options
-                                options = get_product_options(product_id)
+                                options = get_modifier(product_id)
                                 option_list = ["No option"] + [opt[0] for opt in options]
 
                                 

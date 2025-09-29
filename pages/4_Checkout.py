@@ -33,12 +33,11 @@ def get_order_details(service_area_id):
             oc.subtotal,
             op.product_id,
             pi.description,
-            op.option,
             op.product_quantity,
             pi.price
         FROM Order_Cart oc
         LEFT JOIN Order_Product op ON oc.order_id = op.order_id
-        LEFT JOIN Product_Item pi ON op.product_id = pi.product_id
+        LEFT JOIN Product pi ON op.product_id = pi.product_id
         WHERE oc.service_area_id = ? AND oc.order_status = 2
         ORDER BY oc.order_id, pi.description
     """, (service_area_id,))
@@ -134,7 +133,8 @@ def show_checkout_page():
         # Service area dropdown
         selected_area = st.selectbox(
             "Service Area ID:",
-            options=[None] + available_areas,
+            # options=[None] + available_areas,
+            options=[None],
             format_func=lambda x: "Select..." if x is None else str(x),
             key="service_area_dropdown"
         )
@@ -161,7 +161,7 @@ def show_checkout_page():
                 if row['product_id']:  # Check if product exists
                     orders[order_id].append({
                         'description': row['description'],
-                        'option': row['option'],
+                        # 'option': row['option'],
                         'quantity': row['product_quantity'],
                         'price': row['price']
                     })
@@ -179,8 +179,8 @@ def show_checkout_page():
             for order_id, items in orders.items():
                 for item in items:
                     description = item['description']
-                    if item['option']:
-                        description += f" ({item['option']})"
+                    # if item['option']:
+                    #     description += f" ({item['option']})"
                     
                     quantity = item['quantity']
                     total_price = format_price(item['price'] * quantity)

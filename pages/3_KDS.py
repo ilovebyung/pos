@@ -42,10 +42,9 @@ def get_order_items(order_id):
             op.order_id,
             op.product_id,
             pi.description as product_name,
-            op.option,
             op.product_quantity
         FROM Order_Product op
-        INNER JOIN Product_Item pi ON op.product_id = pi.product_id
+        INNER JOIN Product pi ON op.product_id = pi.product_id
         INNER JOIN Order_Cart oc ON op.order_id = oc.order_id
         WHERE op.order_id = ? AND oc.order_status = 1
         ORDER BY pi.description
@@ -80,8 +79,8 @@ def confirm_order(order_id):
         conn.close()
 
 # Create unique item key for session state
-def create_item_key(order_id, product_id, option, index):
-    return f"{order_id}_{product_id}_{option or 'none'}_{index}"
+def create_item_key(order_id, product_id, index):
+    return f"{order_id}_{product_id}_{index}"
 
 # Display order with checkboxes
 def display_order_with_checkboxes(order, items):
@@ -91,12 +90,9 @@ def display_order_with_checkboxes(order, items):
     
     for i, item in enumerate(items):
         product_display = item['product_name']
-        if item['option']:
-            product_display += f" ({item['option']})"
-        product_display += f" x {item['product_quantity']}"
         
         # Create unique key for this item
-        item_key = create_item_key(order['order_id'], item['product_id'], item['option'], i)
+        item_key = create_item_key(order['order_id'], item['product_id'], i)
         
         # Initialize checkbox state if not exists
         if item_key not in st.session_state.item_states:
