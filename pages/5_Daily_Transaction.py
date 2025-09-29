@@ -7,8 +7,8 @@ from utils.database import  get_db_connection
 from utils.style import load_css 
 
 # Page configuration
-st.set_page_config(page_title="Daily Transactions", page_icon="📊", layout="wide")
-st.title("📊 Daily Transactions")
+st.set_page_config(page_title="Daily Transactions", page_icon="📑", layout="wide")
+st.title("📑 Daily Transactions")
 st.markdown("---")
 
 
@@ -23,9 +23,9 @@ def get_transaction_data(start_date, end_date):
         SELECT 
             oh.order_id,
             CASE oh.order_status
-                WHEN 1 THEN 'created'
-                WHEN 2 THEN 'confirmed'
-                WHEN 3 THEN 'completed'
+                WHEN 1 THEN 'order created'
+                WHEN 2 THEN 'order confirmed'
+                WHEN 3 THEN 'order paid'
                 ELSE 'unknown'
             END AS order_status,
             oh.timestamp,
@@ -248,22 +248,3 @@ else:
     # Show record count
     st.info(f"Showing {len(display_df)} of {total_rows} records")
 
-# # Export functionality
-# if not df.empty:
-#     st.divider()
-#     st.subheader(" Export Data")
-    
-#     col1, col2 = st.columns(2)
-#     with col1:
-#         if st.button("📋 Copy to Clipboard"):
-#             display_df.to_clipboard(index=False)
-#             st.success("Data copied to clipboard!")
-    
-#     with col2:
-#         csv = display_df.to_csv(index=False)
-#         st.download_button(
-#             label="💾 Download CSV",
-#             data=csv,
-#             file_name=f"transactions_{start_date}_{end_date}.csv",
-#             mime="text/csv"
-#         )

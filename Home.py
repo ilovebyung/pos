@@ -14,4 +14,4 @@ for _ in range(20):
     st.write("")
 
 # Caption at the bottom
-st.caption("Built with ❤️ by BADA & I4U") 
+st.caption("Built with ❤️ by BADA") 

@@ -1,6 +1,6 @@
 import sqlite3, time
 
-conn = sqlite3.connect("performance.db")
+conn = sqlite3.connect("performance.database")
 conn.execute('PRAGMA journal_mode=WAL;')  # Enable WAL mode
 cur = conn.cursor()
 
