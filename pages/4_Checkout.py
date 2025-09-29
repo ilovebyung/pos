@@ -133,8 +133,7 @@ def show_checkout_page():
         # Service area dropdown
         selected_area = st.selectbox(
             "Service Area ID:",
-            # options=[None] + available_areas,
-            options=[None],
+            options=[None] + available_areas,
             format_func=lambda x: "Select..." if x is None else str(x),
             key="service_area_dropdown"
         )
