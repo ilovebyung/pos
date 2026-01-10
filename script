@@ -1,0 +1,207 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE Company (
+    company_id INTEGER PRIMARY KEY,
+    description TEXT NOT NULL 
+);
+INSERT INTO Company VALUES(1234,'Honolulu Bistro');
+CREATE TABLE Site (
+    site_id INTEGER PRIMARY KEY,
+    description TEXT NOT NULL 
+);
+INSERT INTO Site VALUES(5678,'Ala Moana');
+CREATE TABLE Service_Area (
+    service_area_id INTEGER PRIMARY KEY, 
+    description TEXT,
+    status INTEGER DEFAULT 0,
+    timestamp DATETIME 
+);
+INSERT INTO Service_Area VALUES(1,'buffet tables for eight',0,NULL);
+INSERT INTO Service_Area VALUES(2,'square table for two',0,NULL);
+INSERT INTO Service_Area VALUES(3,'rectangular table for four',0,NULL);
+INSERT INTO Service_Area VALUES(4,'round table for six',0,NULL);
+INSERT INTO Service_Area VALUES(5,'VIP booth',0,NULL);
+INSERT INTO Service_Area VALUES(6,'outdoor patio table',0,NULL);
+INSERT INTO Service_Area VALUES(7,'bar counter seat',0,NULL);
+INSERT INTO Service_Area VALUES(8,'window-side table for two',0,NULL);
+CREATE TABLE Category (
+    category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT NOT NULL
+);
+INSERT INTO Category VALUES(1,'Burgers and Sandwiches');
+INSERT INTO Category VALUES(2,'Fried Chicken');
+INSERT INTO Category VALUES(3,'Salads and Wraps');
+INSERT INTO Category VALUES(4,'Sides');
+CREATE TABLE Product (
+    product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT NOT NULL,
+    category_id INTEGER,
+    price INTEGER NOT NULL,
+    tax INTEGER DEFAULT 4,
+    status INTEGER DEFAULT 1,
+    FOREIGN KEY (category_id) REFERENCES Category(category_id)
+);
+INSERT INTO Product VALUES(1,'Classic Cheeseburger',1,599,4,1);
+INSERT INTO Product VALUES(2,'Grilled Chicken Club',1,799,4,1);
+INSERT INTO Product VALUES(3,'Veggie Burger',1,699,4,1);
+INSERT INTO Product VALUES(5,'Crispy Chicken Tenders (6 pcs)',2,699,4,1);
+INSERT INTO Product VALUES(6,'Chicken Bucket (8 pcs)',2,1299,4,1);
+INSERT INTO Product VALUES(7,'Spicy Fried Chicken Sandwich',2,679,4,1);
+INSERT INTO Product VALUES(8,'Grilled Chicken Caesar Salad',3,749,4,1);
+INSERT INTO Product VALUES(9,'Southwest Chicken Wrap',3,699,4,1);
+INSERT INTO Product VALUES(10,'Garden Salad',3,599,4,1);
+INSERT INTO Product VALUES(11,'French Fries (Small)',4,249,4,1);
+INSERT INTO Product VALUES(12,'French Fries (Large)',4,349,4,1);
+CREATE TABLE Modifier_Group (
+    modifier_group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT NOT NULL
+);
+INSERT INTO Modifier_Group VALUES(1,'Well Doneness');
+CREATE TABLE Modifier (
+    modifier_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT NOT NULL,
+    product_id INTEGER,
+    modifier_group_id INTEGER DEFAULT 0,
+    price INTEGER DEFAULT 0,
+    status INTEGER DEFAULT 1,
+    FOREIGN KEY (product_id) REFERENCES Product(product_id),
+    FOREIGN KEY (modifier_group_id) REFERENCES Modifier_Group(modifier_group_id)
+);
+INSERT INTO Modifier VALUES(1,'BBQ Sauce',1,0,0,1);
+INSERT INTO Modifier VALUES(2,'Vegan Cheese',1,0,0,1);
+INSERT INTO Modifier VALUES(3,'Sweet Onion Sauce',2,0,0,1);
+INSERT INTO Modifier VALUES(4,'Vegan Cheese',2,0,0,1);
+INSERT INTO Modifier VALUES(5,'No onion',3,0,0,1);
+INSERT INTO Modifier VALUES(6,'No tomato',3,0,0,1);
+INSERT INTO Modifier VALUES(7,'Honey Mustard',4,0,0,1);
+INSERT INTO Modifier VALUES(8,'Yellow and Brown Mustard',4,0,0,1);
+INSERT INTO Modifier VALUES(9,'Rare',NULL,1,0,1);
+INSERT INTO Modifier VALUES(10,'Medium',NULL,1,0,1);
+INSERT INTO Modifier VALUES(11,'Well Done',NULL,1,0,1);
+CREATE TABLE Order_Product_Modifier (
+    order_id INTEGER,
+    product_id INTEGER,
+    --modifier_id INTEGER,
+    modifier TEXT,
+    FOREIGN KEY (order_id) REFERENCES Order_Cart(order_id),
+    FOREIGN KEY (product_id) REFERENCES Product(product_id)
+    --FOREIGN KEY (modifier_id) REFERENCES Modifier(modifier_id)
+);
+CREATE TABLE Order_Product (
+    order_id INTEGER,
+    product_id INTEGER,
+    modifier_id INTEGER,
+    product_quantity INTEGER NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES Order_Cart(order_id),
+    FOREIGN KEY (product_id) REFERENCES Product(product_id),
+    FOREIGN KEY (modifier_id) REFERENCES Modifier(modifier_id)
+);
+CREATE TABLE Order_Cart (
+    order_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_status INTEGER NOT NULL DEFAULT 0,
+    service_area_id INTEGER NOT NULL,
+    customer_id INTEGER,
+    subtotal INTEGER DEFAULT 0,
+    total INTEGER DEFAULT 0,
+    tip INTEGER DEFAULT 0,
+    note TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (service_area_id) REFERENCES Service_Area(service_area_id),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id)
+);
+CREATE TABLE Order_History (
+    order_id INTEGER,
+    order_status INTEGER,
+    subtotal INTEGER,
+    total INTEGER,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE Customer (
+    customer_id INTEGER PRIMARY KEY, -- phone number as unique int
+    description TEXT, -- name, initial or anything a customer wishes to be 
+    point INTEGER DEFAULT 0
+);
+CREATE TABLE Customer_History (
+    customer_id INTEGER,
+    point INTEGER,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE Role(
+    role_id INTEGER PRIMARY KEY, 
+    description TEXT	
+);
+INSERT INTO Role VALUES(1,'Cashier');
+INSERT INTO Role VALUES(2,'Server');
+INSERT INTO Role VALUES(3,'Cook');
+INSERT INTO Role VALUES(4,'Manager');
+INSERT INTO Role VALUES(5,'Administrator');
+INSERT INTO Role VALUES(6,'Self Service');
+CREATE TABLE User(
+    user_id INTEGER PRIMARY KEY, 
+    description TEXT,
+    status INTEGER	
+);
+CREATE TABLE User_Role (
+    user_id INTEGER,
+    role_id INTEGER,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES User(user_id),
+    FOREIGN KEY (role_id) REFERENCES Role(role_id)
+);
+CREATE TABLE User_History (
+    user_id INTEGER,
+    role_id INTEGER,
+    status INTEGER,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+DELETE FROM sqlite_sequence;
+INSERT INTO sqlite_sequence VALUES('Category',4);
+INSERT INTO sqlite_sequence VALUES('Product',12);
+INSERT INTO sqlite_sequence VALUES('Modifier',11);
+INSERT INTO sqlite_sequence VALUES('Modifier_Group',1);
+CREATE INDEX idx_modifier_product_id 
+ON Modifier(product_id);
+CREATE INDEX idx_order_product_modifier_order_id 
+ON Order_Product_Modifier (order_id);
+CREATE INDEX idx_order_product_order_id 
+ON Order_Product(order_id);
+CREATE TRIGGER log_order_insert
+AFTER INSERT ON Order_Cart
+FOR EACH ROW
+BEGIN
+    INSERT INTO Order_History (order_id, order_status, timestamp)
+    VALUES (NEW.order_id, NEW.order_status, CURRENT_TIMESTAMP);
+END;
+CREATE TRIGGER log_order_update
+AFTER UPDATE ON Order_Cart
+FOR EACH ROW
+BEGIN
+    INSERT INTO Order_History (order_id, order_status, timestamp)
+    VALUES (NEW.order_id, NEW.order_status, CURRENT_TIMESTAMP);
+END;
+CREATE INDEX idx_order_history_order_id 
+ON Order_History(order_id);
+CREATE INDEX idx_order_history_timestamp
+ON Order_History(timestamp);
+CREATE TRIGGER log_customer_insert
+AFTER INSERT ON Customer
+FOR EACH ROW
+BEGIN
+    INSERT INTO Customer_History (customer_id, point, timestamp)
+    VALUES (NEW.customer_id, NEW.point, CURRENT_TIMESTAMP);
+END;
+CREATE TRIGGER log_customer_update
+AFTER UPDATE ON Customer
+FOR EACH ROW
+BEGIN
+    INSERT INTO Customer_History (customer_id, point, timestamp)
+    VALUES (NEW.customer_id, NEW.point, CURRENT_TIMESTAMP);
+END;
+CREATE TRIGGER log_user_insert
+AFTER INSERT ON User
+FOR EACH ROW
+BEGIN
+    INSERT INTO User_History (user_id, role_id, status, timestamp)
+    VALUES (NEW.user_id, NEW.role_id, NEW.status, CURRENT_TIMESTAMP);
+END;
+COMMIT;

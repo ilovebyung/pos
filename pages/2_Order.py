@@ -5,9 +5,14 @@ from utils.database import  get_db_connection
 from utils.style import load_css
 
 
-# Set selected_service_area 7
+# Set selected_service_area 
 if 'selected_service_area' not in st.session_state:
-    st.session_state.selected_service_area = 7
+    try:
+        st.error("No service areas with pending orders found.")
+        st.switch_page("Home.py")
+
+    except Exception as e:
+        st.error(e)
 
 # Initialize session state for cart
 if 'cart' not in st.session_state:
