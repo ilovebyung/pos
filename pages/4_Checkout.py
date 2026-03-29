@@ -56,7 +56,7 @@ def settle_order(order_ids, total_charged, service_area_id):
         for order_id in order_ids:
             cursor.execute("""
                 UPDATE Order_Cart 
-                SET order_status = 3, charged = ?
+                SET order_status = 3, total = ?
                 WHERE order_id = ?
             """, (total_charged, order_id))
         
