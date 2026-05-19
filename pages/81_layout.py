@@ -6,28 +6,32 @@ import pandas as pd
 def init_db():
     conn = sqlite3.connect('layout.db')
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS tables 
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                  table_type TEXT, 
-                  capacity INTEGER, 
-                  row_idx INTEGER, 
-                  col_idx INTEGER)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS Service_Area (
+        service_area_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        description TEXT,
+        table_type TEXT, 
+        capacity INTEGER, 
+        row_idx INTEGER, 
+        col_idx INTEGER,    
+        status INTEGER DEFAULT 0,
+        timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
+    );''')
     conn.commit()
     conn.close()
 
 def save_layout(layout_data):
     conn = sqlite3.connect('layout.db')
     c = conn.cursor()
-    c.execute("DELETE FROM tables") 
+    c.execute("DELETE FROM Service_Area") 
     for item in layout_data:
-        c.execute("INSERT INTO tables (table_type, capacity, row_idx, col_idx) VALUES (?, ?, ?, ?)", 
+        c.execute("INSERT INTO Service_Area (table_type, capacity, row_idx, col_idx) VALUES (?, ?, ?, ?)", 
                   (item['type'], item['capacity'], item['row'], item['col']))
     conn.commit()
     conn.close()
 
 def load_layout():
     conn = sqlite3.connect('layout.db')
-    df = pd.read_sql_query("SELECT * FROM tables", conn)
+    df = pd.read_sql_query("SELECT * FROM Service_Area", conn)
     conn.close()
     return df
 
@@ -93,7 +97,6 @@ def main():
             with cols[c]:
                 table_data = st.session_state.layout.get((r, c))
                 if table_data:
-                    # Clean text tags representing the table layout buttons
                     btn_label = f"{table_data['type']}\n({table_data['capacity']})"
                     if st.button(btn_label, key=f"btn_{r}_{c}"):
                         toggle_table(r, c)
