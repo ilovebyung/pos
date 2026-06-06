@@ -3,8 +3,12 @@ import pandas as pd
 from utils.database import get_db_connection
 from utils.util import format_price
 
-
-# ── Reuse data fetchers from 11_CFD.py ──────────────────────────────────────
+# Page configuration
+st.set_page_config(
+    page_title="Service Area - POS System",
+    page_icon="🍽️",
+    layout="wide"
+) 
 
 def get_modifiers_details(modifier_ids):
     """Return a list of modifier dicts given a modifier id string/list."""
