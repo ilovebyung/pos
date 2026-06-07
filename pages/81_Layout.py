@@ -1,29 +1,8 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
-from datetime import datetime
+from utils.database import get_db_connection
 
 # --- DATABASE FUNCTIONS ---
-def get_db_connection():
-    return sqlite3.connect('pos_database.db')
-
-def init_db():
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS Service_Area (
-            service_area_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            description TEXT,
-            table_shape TEXT,
-            capacity INTEGER,
-            row_idx INTEGER,
-            col_idx INTEGER,    
-            status INTEGER DEFAULT 0,
-            timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
 def save_layout(layout_dict):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -44,7 +23,6 @@ def load_layout():
 
 # --- UI RENDERING ---
 def render_table_shape(table_shape, capacity, description=""):
-    # Color mapping based on shape
     colors = {"Square": "#ADD8E6", "Circle": "#90EE90", "Rectangular": "#FFB6C1"}
     color = colors.get(table_shape, "gray")
     radius = "50%" if table_shape == "Circle" else "10px"
@@ -61,37 +39,29 @@ def render_table_shape(table_shape, capacity, description=""):
 # --- MAIN APP ---
 def main():
     st.set_page_config(layout="wide")
-    init_db()
 
     if 'layout' not in st.session_state:
         st.session_state.layout = {}
 
-    # grid_rows, grid_cols = 5, 5
     st.sidebar.header("Configuration")
-    # Changed from number_input to slider and value to 5
     grid_rows = st.sidebar.slider("Grid Rows", min_value=1, max_value=20, value=5)
     grid_cols = st.sidebar.slider("Grid Columns", min_value=1, max_value=20, value=5)
 
-    # SIDEBAR: Add Table
     st.sidebar.subheader("Add Table")
     selected_shape = st.sidebar.selectbox("Table Shape", ["Rectangular", "Circle"])
-    # selected_capacity = st.sidebar.number_input("Capacity", min_value=1, value=2)
     selected_capacity = st.sidebar.number_input("Capacity", min_value=1, max_value=10, value=2)
-    selected_description = st.sidebar.text_input("Description", "") # Requirement: description field
+    selected_description = st.sidebar.text_input("Description", "")
 
     def toggle_table(r, c):
         if (r, c) in st.session_state.layout:
             del st.session_state.layout[(r, c)]
         else:
-            # Fix: Now saving description to session state to prevent KeyError
             st.session_state.layout[(r, c)] = {
                 "table_shape": selected_shape,
                 "capacity": selected_capacity,
                 "description": selected_description
             }
 
-    # Grid Editor Workspace
-    # st.subheader("Edit Floor Plan")
     st.info("Click a cell to place the selected table shape. Click again to remove it.")  
     
     for r in range(grid_rows):
@@ -100,7 +70,6 @@ def main():
             with cols[c]:
                 table_data = st.session_state.layout.get((r, c))
                 if table_data:
-                    # Display shape and capacity on the button [1]
                     btn_label = f"{table_data['table_shape']}\n({table_data['capacity']})"
                     if st.button(btn_label, key=f"btn_{r}_{c}"):
                         toggle_table(r, c)
@@ -112,7 +81,29 @@ def main():
     st.divider()
 
     # Save and Preview Controls
-    col_save, col_preview = st.columns([1, 5])
+    col_load, col_save, col_preview = st.columns([1,1, 5])
+    with col_load:
+        if st.button("Load Layout"):
+            loaded_df = load_layout()
+            
+            # FIX 1: Use .empty to check if the DataFrame has records
+            if not loaded_df.empty:
+                # FIX 2: Convert DataFrame rows back into the dictionary format expected by the app
+                parsed_layout = {}
+                for _, row in loaded_df.iterrows():
+                    r, c = int(row['row_idx']), int(row['col_idx'])
+                    parsed_layout[(r, c)] = {
+                        "table_shape": row['table_shape'],
+                        "capacity": int(row['capacity']),
+                        "description": row['description']
+                    }
+                
+                st.session_state.layout = parsed_layout
+                st.success("Layout Loaded!")
+                st.rerun()  # Force rerun to show updated layout instantly
+            else:
+                st.warning("No layout found in Service_Area table.")
+
     with col_save:
         if st.button("Save Layout"):
             save_layout(st.session_state.layout)
@@ -121,7 +112,6 @@ def main():
     with col_preview:
         show_layout = st.toggle("Show Layout Preview")
 
-    # VISUAL LAYOUT PREVIEW PANEL
     if show_layout:
         st.subheader("Visual Layout Preview")
         for r in range(grid_rows):
@@ -130,7 +120,6 @@ def main():
                 with cols[c]:
                     table_data = st.session_state.layout.get((r, c))
                     if table_data:
-                        # Fix: Pass description to the render function [1]
                         st.markdown(
                             render_table_shape(
                                 table_data['table_shape'], 
@@ -141,9 +130,6 @@ def main():
                         )
                     else:
                         st.write("")  
-
-    # if st.checkbox("Show Database Table"):
-    #     st.table(load_layout())
 
 if __name__ == "__main__":
     main()
