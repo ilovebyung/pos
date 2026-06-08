@@ -6,8 +6,8 @@ from utils.style import load_css
 
 # Page configuration
 st.set_page_config(
-    page_title="Service Area - POS System",
-    page_icon="🍽️",
+    # page_title="Service Area - POS System",
+    # page_icon="🍽️",
     layout="wide"
 )
 
@@ -68,8 +68,8 @@ def render_table_shape(table_shape, capacity, description, status):
 
 # --- MAIN APP ---
 load_css()
-st.title("🍽️ Service Area Selection")
-st.markdown("### Please select an available table or seating area")
+# st.title("🍽️ Service Area Selection")
+# st.markdown("### Please select an available table or seating area")
 
 # Load configuration grid metadata
 layout_df = get_service_area_layout()
@@ -134,9 +134,13 @@ else:
 st.markdown("---")
 
 # --- RESET CONSOLE COMPONENT ---
-col_reset1, col_reset2, col_reset3 = st.columns([1, 1, 1])
-with col_reset2:
-    st.markdown("#### Select Service Area to Reset:")
+col_legend, col_reset = st.columns([3, 1])
+
+with col_legend:
+        st.markdown(f"**Summary:** {available_count} available, {occupied_count} occupied")
+
+with col_reset:
+    # st.markdown("#### Select Service Area to Reset:")
     
     if occupied_areas:
         dropdown_options = {}
@@ -148,7 +152,7 @@ with col_reset2:
             dropdown_options[display_text] = area['service_area_id']
         
         selected_option = st.selectbox(
-            "Choose a service area:",
+            "Choose a service area to reset:",
             [None] + dropdown_display,
             format_func=lambda x: "Select..." if x is None else x,
             key="reset_dropdown"
@@ -163,12 +167,4 @@ with col_reset2:
     else:
         st.info("No occupied service areas to reset.")
 
-# --- BOTTOM LEGEND METRICS ---
-st.markdown("### Status Legend")
-col_legend1, col_legend2 = st.columns(2)
-with col_legend1:
-    st.markdown("🟩 / 🟦 / 🟪 **Available Shapes** - Dynamic shapes ready for seating selections")
-with col_legend2:
-    st.markdown("🟥 **Occupied** - Table currently in checkout use cycle")
 
-st.markdown(f"**Summary:** {available_count} available, {occupied_count} occupied")
